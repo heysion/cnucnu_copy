@@ -150,6 +150,10 @@ class Package(object):
             if not name_override and name.startswith("php-pecl-"):
                 name = name[len("php-pecl-"):].replace("-","_")
                 regex = "DEFAULT"
+        elif regex == "RUBYGEMS-DEFAULT":
+            # strip "rubygem-" prefix only if name was not overridden
+            if not name_override and name.startswith("rubygem-"):
+                name = name[len("rubygem-"):]
 
         # no elif here, because the previous regex aliases are only for name altering
         if regex == "DEFAULT":
@@ -166,6 +170,8 @@ class Package(object):
             regex = '<a href="/projects/[^/]*/releases/[0-9]*">([^<]*)</a>'
         elif regex == "HACKAGE-DEFAULT" or regex== "DIR-LISTING-DEFAULT":
             regex = 'href="([0-9][0-9.]*)/"'
+        elif regex == "RUBYGEMS-DEFAULT":
+            regex = '"gem_uri":"http:\/\/rubygems.org\/gems\/%s-([0-9.]*?)\.gem"' % re.escape(name)
 
         self.__regex = regex
         self._invalidate_caches()
@@ -178,7 +184,7 @@ class Package(object):
         name = self.name
         # allow name override with e.g. SF-DEFAULT:othername
         if url:
-            name_override = re.match(r"^((?:SF|FM|GNU|CPAN|HACKAGE|DEBIAN|GOOGLE|PEAR|PECL|PYPI|LP|GNOME)-DEFAULT)(?::(.+))$", url)
+            name_override = re.match(r"^((?:SF|FM|GNU|CPAN|HACKAGE|DEBIAN|GOOGLE|PEAR|PECL|PYPI|LP|GNOME|RUBYGEMS)-DEFAULT)(?::(.+))$", url)
             if name_override:
                 url = name_override.group(1)
                 name = name_override.group(2)
@@ -219,6 +225,8 @@ class Package(object):
             url = "https://launchpad.net/%s/+download" % name
         elif url == "GNOME-DEFAULT":
             url = "http://download.gnome.org/sources/%s/*/" % name
+        elif url == "RUBYGEMS-DEFAULT":
+            url = "http://rubygems.org/api/v1/gems/%s.json" % name
 
         self.__url = url
         self.html = None
