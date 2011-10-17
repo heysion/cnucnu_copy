@@ -226,6 +226,9 @@ class Package(object):
         elif url == "GNOME-DEFAULT":
             url = "http://download.gnome.org/sources/%s/*/" % name
         elif url == "RUBYGEMS-DEFAULT":
+            # strip "rubygem-" prefix only if name was not overridden
+            if not name_override and name.startswith("rubygem-"):
+                name = name[len("rubygem-"):]
             url = "http://rubygems.org/api/v1/gems/%s.json" % name
 
         self.__url = url
