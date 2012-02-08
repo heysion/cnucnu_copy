@@ -187,8 +187,8 @@ __rc_upstream_regex = re.compile("(.*?)(-?(rc|pre|beta|alpha)([0-9]*))", re.I)
 __rc_release_regex = re.compile(r'0\.[0-9]+\.(rc|pre|beta|alpha)([0-9]*)', re.I)
 
 def split_rc(version):
-    """ Split version into version and release candidate string +
-        release candidate number if possible
+    """ Split (upstream) version into version and release candidate string +
+    release candidate number if possible
     """
     match = __rc_upstream_regex.match(version)
     if not match:
@@ -206,6 +206,8 @@ def split_rc(version):
         return (version, "", "")
 
 def get_rc(release):
+    """ Get the rc value of a package's release
+    """
     match = __rc_release_regex.match(release)
 
     if match:
