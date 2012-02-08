@@ -47,6 +47,7 @@ class HelperTest(unittest.TestCase):
         self.assertEqual(split_rc("0.1-beta3"), ("0.1", "beta", "3"))
         self.assertEqual(split_rc("20110404beta0"), ("20110404", "beta", "0"))
         self.assertEqual(split_rc("123alpha05"), ("123", "alpha", "05"))
+        self.assertEqual(split_rc("1.4.7.dev3"), ("1.4.7", "dev", "3"))
 
     def test_upstream_cmp_rc(self):
         self.assertEqual(upstream_cmp("4.0.0", "4.0.0"), 0)
@@ -68,6 +69,7 @@ class HelperTest(unittest.TestCase):
         self.assertEqual(upstream_cmp("1.0.0", "1.0.0-rc1"), 1)
         self.assertEqual(upstream_cmp("1.0.0rc3", "1.0.0-RC21"), -1)
         self.assertEqual(upstream_cmp("1.0.0rc10", "1.0.0-rc0010"), 0)
+        self.assertEqual(upstream_cmp("1.4.7", "1.4.7.dev3"), 1)
 
     def test_upstream_cmp_pre(self):
         self.assertEqual(upstream_cmp("4.0.0", "4.0.0"), 0)

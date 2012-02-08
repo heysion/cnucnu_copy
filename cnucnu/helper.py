@@ -183,8 +183,8 @@ def upstream_cmp(v1, v2):
     return 0
 
 
-__rc_upstream_regex = re.compile("(.*?)(-?(rc|pre|beta|alpha)([0-9]*))", re.I)
-__rc_release_regex = re.compile(r'0\.[0-9]+\.(rc|pre|beta|alpha)([0-9]*)', re.I)
+__rc_upstream_regex = re.compile("(.*?)\.?(-?(rc|pre|beta|alpha|dev)([0-9]*))", re.I)
+__rc_release_regex = re.compile(r'0\.[0-9]+\.(rc|pre|beta|alpha|dev)([0-9]*)', re.I)
 
 def split_rc(version):
     """ Split (upstream) version into version and release candidate string +
