@@ -190,7 +190,7 @@ class Package(object):
                 name = name_override.group(2)
         name = urllib.quote(name, safe='')
         if url == "SF-DEFAULT":
-            url = "http://sourceforge.net/api/file/index/project-name/%s/mtime/desc/limit/20/rss" % name
+            url = "http://sourceforge.net/api/file/index/project-name/%s/mtime/desc/limit/100/rss" % name
         elif url == "FM-DEFAULT":
             url = "http://freshmeat.net/projects/%s" % name
         elif url == "GNU-DEFAULT":
