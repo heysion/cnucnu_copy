@@ -78,7 +78,10 @@ class Repository:
         return new_nvr_dict
 
     def package_version(self, package):
-        return self.nvr_dict[package.name][0]
+        try:
+            return self.nvr_dict[package.name][0]
+        except KeyError:
+            raise cc_errors.PackageNotFoundError("package '%s' not found in repository '%s' (%s)" % (package.name, self.name, self.path))
 
     def package_release(self, package):
         return self.nvr_dict[package.name][1]

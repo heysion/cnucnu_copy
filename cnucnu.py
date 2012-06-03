@@ -21,7 +21,8 @@ import logging
 import sys
 import os
 
-import cnucnu.config
+import cnucnu
+import cnucnu.errors as cc_errors
 from cnucnu.config import global_config
 from cnucnu.package_list import Repository, PackageList, Package
 from cnucnu.checkshell import CheckShell
@@ -49,7 +50,12 @@ class Actions(object):
                 log.info("checking package '%s'", p.name)
                 try:
                     if p.upstream_newer:
+                        print "package '%s' outdated (%s < %s)" % (p.name, p.repo_version, p.latest_upstream)
                         pprint(p.report_outdated(dry_run=args.dry_run))
+                except cc_errors.UpstreamVersionRetrievalError:
+                    log.error("Failed to fetch upstream information for package '%s'" % p.name)
+                except cc_errors.PackageNotFoundError, e:
+                    log.error(e)
                 except Exception, e:
                     log.exception("Exception occured while processing package '%s':\n%s" % (p.name, pp.pformat(e)))
             else:

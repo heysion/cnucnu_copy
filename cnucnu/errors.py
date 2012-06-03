@@ -28,3 +28,6 @@ class CnuCnuError(Exception):
 
 class UpstreamVersionRetrievalError(CnuCnuError):
     Name = "Upstream Version Retrieval Error"
+
+class PackageNotFoundError(CnuCnuError):
+    Name = "Package not found in repository"
