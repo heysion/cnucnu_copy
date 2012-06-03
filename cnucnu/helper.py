@@ -106,6 +106,8 @@ def get_html(url, callback=None, errback=None):
             c.setopt(pycurl.FOLLOWLOCATION, 1)
             c.setopt(pycurl.MAXREDIRS, 10)
             c.setopt(pycurl.USERAGENT, "Fedora Upstream Release Monitoring (https://fedoraproject.org/wiki/Upstream_release_monitoring)")
+            c.setopt(pycurl.CONNECTTIMEOUT, 10)
+            c.setopt(pycurl.TIMEOUT, 30)
 
             c.perform()
             c.close()
