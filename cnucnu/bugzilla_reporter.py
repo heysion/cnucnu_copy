@@ -22,6 +22,7 @@ from config import global_config
 from helper import filter_dict
 
 import logging
+log = logging.getLogger('cnucnu.bugzilla_reporter')
 
 class BugzillaReporter(object):
     base_query = {'query_format': ['advanced'], 'emailreporter1': ['1'], 'emailtype1': ['exact']}
@@ -90,14 +91,14 @@ class BugzillaReporter(object):
                     update = {'summary': self.config["short_desc template"] % package,
                               'comment': self.config["description template"] % package
                              }
-                    print repr(update)
+                    log.debug("About to update bug '%s' with '%r'" % (open_bug.bug_id, update))
                     res = self.bz._update_bug(open_bug.bug_id, update)
-                    print res
-                    print self.bug_url(open_bug)
+                    log.debug("Result from bug update: %r" % res)
+                    log.info("Updated bug: %s" % self.bug_url(open_bug))
                     return res
         else:
             bug = package.exact_outdated_bug
-            print "bug already filed:%s %s" % (self.bug_url(bug), bug.bug_status)
+            log.info("already reported:%s %s" % (self.bug_url(bug), bug.bug_status))
 
 
     def create_outdated_bug(self, package, dry_run=True):
@@ -109,12 +110,12 @@ class BugzillaReporter(object):
         if not dry_run:
             new_bug = self.bz.createbug(**bug_dict)
             change_status = None
-            print new_bug
-            print self.bug_url(new_bug)
+            log.debug("Created new bug: %r" % new_bug)
+            log.info("Created bug: %s" % self.bug_url(new_bug))
 
             if new_bug.bug_status != self.config['bug status']:
                 change_status = self.bz._proxy.bugzilla.changeStatus(new_bug.bug_id, self.config['bug status'], self.config['user'], "", "", False, False, 1)
-                print "status changed", change_status
+                log.debug("Changed bug status %r" % change_status)
             return (new_bug, change_status)
         else:
             return (bug_dict, None)
