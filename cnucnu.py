@@ -21,6 +21,7 @@ import logging
 import sys
 import os
 
+import cnucnu.config
 from cnucnu.config import global_config
 from cnucnu.package_list import Repository, PackageList, Package
 from cnucnu.checkshell import CheckShell
@@ -33,50 +34,9 @@ pprint = pp.pprint
 
 log = logging.getLogger('cnucnu')
 
-if __name__ == '__main__':
-    from optparse import OptionParser
-    parser = OptionParser()
-
-    parser.add_option("", "--shell", dest="action", help="Interactive shell", action="store_const", const="shell")
-    parser.add_option("", "--config", dest="config_filename", help="config_filename, e.g. for bugzilla credentials")
-    parser.add_option("", "--create-bugs", dest="action", help="file bugs for outdated packages", action="store_const", const="create-bugs")
-    parser.add_option("", "--fm-outdated-all", dest="action", help="compare all packages in rawhide with freshmeat", action="store_const", const="fm-outdated-all")
-    parser.add_option("", "--dump-config", dest="action", help="dumps dconfig to stdout", action="store_const", const="dump-config")
-    parser.add_option("", "--dump-default-config", dest="action", help="dumps default config to stdout", action="store_const", const="dump-default-config")
-    parser.add_option("", "--dry-run", dest="dry_run", help="Do not file or change bugs", default=False, action="store_true")
-    parser.add_option("", "--loglevel", dest="loglevel", help="Specify loglevel (DEBUG, INFO, WARNING, ERROR or CRITICAL), default: %default", default="WARNING")
-    parser.add_option("", "--start-with", dest="start_with", help="Start with this package when reporting bugs", metavar="PACKAGE", default="")
-
-    (options, args) = parser.parse_args()
-
-    if options.action == "dump-default-config":
-        sys.stdout.write(global_config.yaml)
-        sys.exit(0)
-
-    logging.basicConfig(level=getattr(logging, options.loglevel.upper()))
-
-    # default to ./cnucnu.yaml if it exists and no config file is specified on
-    # the commandline
-    yaml_file = options.config_filename
-    if not yaml_file:
-        new_yaml_file = "./cnucnu.yaml"
-        if os.access(new_yaml_file, os.R_OK):
-            yaml_file = new_yaml_file
-
-    if yaml_file:
-        global_config.update_yaml_file(yaml_file)
-
-    if options.action == "dump-config":
-        sys.stdout.write(global_config.yaml)
-        sys.exit(0)
-
-    if options.action == "shell":
-        shell = CheckShell(config=global_config)
-        while True:
-            if not shell.cmdloop():
-                break
-
-    elif options.action == "create-bugs":
+class Actions(object):
+    def action_report_outdated(self, args):
+        """ file bugs for outdated packages """
         br = BugzillaReporter(global_config.bugzilla_config)
         repo = Repository(**global_config.config["repo"])
         scm = SCM(**global_config.config["scm"])
@@ -85,22 +45,80 @@ if __name__ == '__main__':
 
         pl = PackageList(repo=repo, scm=scm, br=br, **global_config.config["package list"])
         for p in pl:
-            if p.name >= options.start_with:
+            if p.name >= args.start_with:
                 log.info("checking package '%s'", p.name)
                 try:
                     if p.upstream_newer:
-                       pprint(p.report_outdated(dry_run=options.dry_run))
+                        pprint(p.report_outdated(dry_run=args.dry_run))
                 except Exception, e:
                     log.exception("Exception occured while processing package '%s':\n%s" % (p.name, pp.pformat(e)))
             else:
                 log.info("skipping package '%s'", p.name)
 
+    def action_dump_config(self, args):
+        """ dump config to stdout """
+        sys.stdout.write(global_config.yaml)
+        sys.exit(0)
 
-    elif options.action == "fm-outdated-all":
-        print "checking all against FM"
-        repo = Repository()
-        package_names = [name for name in repo.repoquery()]
-        pl=[Package(name, "FM-DEFAULT", "FM-DEFAULT", repo) for name in package_names]
-        packages = PackageList(packages=pl)
-        repo.package_list = packages
-        analyse_packages(packages)
+    def action_dump_default_config(self, args):
+        """ dump default config to stdout """
+        sys.stdout.write(cnucnu.config.Config().yaml)
+        sys.exit(0)
+
+    def action_shell(self, args):
+        """ run interavtive shell """
+        shell = CheckShell(config=global_config)
+        while True:
+            if not shell.cmdloop():
+                break
+
+    @property
+    def possible(self):
+        """ possible actions """
+        possible_actions = {}
+        for method in dir(self):
+            if method.startswith("action_"):
+                possible_actions[method[len("action_"):].replace("_", "-")] = getattr(self, method).__doc__
+        return possible_actions
+
+    def action(self, action):
+        action = action.replace("-", "_")
+        return getattr(self, "action_"+action)
+
+    def do(self, action, args):
+        return self.action(action)(args)
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    actions = Actions()
+
+    parser.add_argument("--config", dest="config_filename", help="config_filename, e.g. for bugzilla credentials")
+    parser.add_argument("--dry-run", dest="dry_run", help="Do not file or change bugs", default=False, action="store_true")
+    parser.add_argument("--loglevel", dest="loglevel", help="Specify loglevel, default: %(default)s", choices=("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"), default="WARNING")
+    parser.add_argument("--start-with", dest="start_with", help="Start with this package when reporting bugs", metavar="PACKAGE", default="")
+
+    subparsers = parser.add_subparsers(dest="action", help='command to perform')
+    possible_actions = actions.possible.items()
+    possible_actions.sort()
+    for action, help_text in possible_actions:
+        command_parser = subparsers.add_parser(action, help=help_text)
+
+    args = parser.parse_args()
+
+
+    logging.basicConfig(level=getattr(logging, args.loglevel.upper()))
+
+    # default to ./cnucnu.yaml if it exists and no config file is specified on
+    # the commandline
+    yaml_file = args.config_filename
+    if not yaml_file:
+        new_yaml_file = "./cnucnu.yaml"
+        if os.access(new_yaml_file, os.R_OK):
+            yaml_file = new_yaml_file
+
+    if yaml_file:
+        global_config.update_yaml_file(yaml_file)
+
+    actions.do(args.action, args)
