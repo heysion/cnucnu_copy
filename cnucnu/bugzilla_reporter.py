@@ -42,6 +42,9 @@ class BugzillaReporter(object):
         if "keywords" in config:
             self.new_bug['keywords'] = config['keywords']
         self.new_bug['version'] = config['version']
+        self.new_bug['op_sys'] = 'Unspecified'
+        self.new_bug['platform'] = 'Unspecified'
+        self.new_bug['bug_severity'] = 'unspecified'
         # Using ASSIGNED returns an exception:
         # <Fault 32000: 'You are not allowed to file new bugs with the\n      ASSIGNED status.'>
         # if the account is in editbugs, fedora_bugs, fedora_contrib, setpriority
