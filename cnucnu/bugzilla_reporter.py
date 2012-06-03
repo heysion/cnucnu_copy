@@ -84,11 +84,11 @@ class BugzillaReporter(object):
                 bug_version = short_desc.split(" ")[0][len(package.name)+1:]
 
                 if bug_version != package.latest_upstream:
-                    update = {'short_desc': self.config["short_desc template"] % package,
+                    update = {'summary': self.config["short_desc template"] % package,
                               'comment': self.config["description template"] % package
                              }
                     print repr(update)
-                    res = self.bz._update_bugs(open_bug.bug_id, update)
+                    res = self.bz._update_bug(open_bug.bug_id, update)
                     print res
                     print self.bug_url(open_bug)
                     return res
