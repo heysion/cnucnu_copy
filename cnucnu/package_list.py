@@ -23,7 +23,8 @@
 __docformat__ = "restructuredtext"
 
 # python default modules
-import re
+# sre_constants contains re exceptions
+import re, sre_constants
 import urllib
 
 # cnucnu modules
@@ -264,7 +265,10 @@ class Package(object):
     def upstream_versions(self):
         if not self._upstream_versions:
 
-            upstream_versions = re.findall(self.regex, self.html)
+            try:
+                upstream_versions = re.findall(self.regex, self.html)
+            except sre_constants.error, e:
+                raise cc_errors.UpstreamVersionRetrievalError("%s: invalid regular expression" % self.name)
             for version in upstream_versions:
                 if " " in version:
                     raise cc_errors.UpstreamVersionRetrievalError("%s: invalid upstream version:>%s< - %s - %s " % (self.name, version, self.url, self.regex))
