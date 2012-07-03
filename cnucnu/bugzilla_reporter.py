@@ -78,6 +78,7 @@ class BugzillaReporter(object):
         if not package.exact_outdated_bug:
             if not package.open_outdated_bug:
                 new_bug, change_status = self.create_outdated_bug(package, dry_run)
+                return self.bug_url(new_bug)
             else:
                 open_bug = package.open_outdated_bug
                 short_desc = open_bug.short_desc
@@ -95,10 +96,11 @@ class BugzillaReporter(object):
                     res = self.bz._update_bug(open_bug.bug_id, update)
                     log.debug("Result from bug update: %r" % res)
                     log.info("Updated bug: %s" % self.bug_url(open_bug))
-                    return res
+                    return self.bug_url(open_bug)
         else:
             bug = package.exact_outdated_bug
             log.info("already reported:%s %s" % (self.bug_url(bug), bug.bug_status))
+            return ""
 
 
     def create_outdated_bug(self, package, dry_run=True):

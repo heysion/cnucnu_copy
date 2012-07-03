@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python -ttu
 # vim: fileencoding=utf8 foldmethod=marker
 #{{{ License header: GPLv2+
 #    This file is part of cnucnu.
@@ -51,7 +51,9 @@ class Actions(object):
                 try:
                     if p.upstream_newer:
                         print "package '%s' outdated (%s < %s)" % (p.name, p.repo_version, p.latest_upstream)
-                        pprint(p.report_outdated(dry_run=args.dry_run))
+                        bug_url = p.report_outdated(dry_run=args.dry_run)
+                        if bug_url:
+                            print bug_url
                 except cc_errors.UpstreamVersionRetrievalError:
                     log.error("Failed to fetch upstream information for package '%s'" % p.name)
                 except cc_errors.PackageNotFoundError, e:
