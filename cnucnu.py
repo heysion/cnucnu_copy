@@ -54,8 +54,8 @@ class Actions(object):
                         bug_url = p.report_outdated(dry_run=args.dry_run)
                         if bug_url:
                             print bug_url
-                except cc_errors.UpstreamVersionRetrievalError:
-                    log.error("Failed to fetch upstream information for package '%s'" % p.name)
+                except cc_errors.UpstreamVersionRetrievalError, e:
+                    log.error("Failed to fetch upstream information for package '%s' (%s)" % (p.name, e.message))
                 except cc_errors.PackageNotFoundError, e:
                     log.error(e)
                 except Exception, e:
