@@ -61,7 +61,7 @@ repo:
     name: Fedora Rawhide
 
 scm:
-    view_scm_url: https://pkgs.fedoraproject.org/gitweb/?p=%(name)s.git;a=blob_plain;f=sources;hb=refs/heads/master
+    view_scm_url: https://pkgs.fedoraproject.org/cgit/%(name)s.git/plain/sources
     cainfo: "fedora-server-ca.cert"
 
 package list:
