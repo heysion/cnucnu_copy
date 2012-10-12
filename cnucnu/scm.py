@@ -60,7 +60,7 @@ class SCM(object):
 
 
 if __name__ == '__main__':
-    scm = SCM(**{"view_scm_url": "https://pkgs.fedoraproject.org/gitweb/?p=%(name)s.git;a=blob_plain;f=sources;hb=refs/heads/master", "cainfo": "fedora-server-ca.cert"})
+    scm = SCM(**{"view_scm_url": "https://pkgs.fedoraproject.org/cgit/%(name)s.git/plain/sources", "cainfo": "fedora-server-ca.cert"})
 
     from package_list import Package, Repository
 
