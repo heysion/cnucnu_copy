@@ -64,15 +64,14 @@ if __name__ == '__main__':
 
     from package_list import Package, Repository
 
-
     import sys
-    package_name = len(sys.argv) > 1 and sys.argv[1] or "crossvc"
+    package_name = len(sys.argv) > 1 and sys.argv[1] or "dsmidiwifi"
 
     package = Package(package_name, "", "", Repository())
-    upstream_version = len(sys.argv) > 2 and sys.argv[1] or "1.5.2-0"
+    upstream_version = len(sys.argv) > 2 and sys.argv[1] or "1.01a"
     package._latest_upstream = upstream_version
 
-    print scm.get_sources({"name": package_name})
-    print scm.get_sourcefiles({"name": package_name})
-    print scm.has_upstream_version(package)
+    print "sources:", scm.get_sources({"name": package_name})
+    print "source files: ", scm.get_sourcefiles({"name": package_name})
+    print "has_upstream_version ", scm.has_upstream_version(package)
 
