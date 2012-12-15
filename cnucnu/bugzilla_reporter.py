@@ -90,10 +90,11 @@ class BugzillaReporter(object):
 
                 if bug_version != package.latest_upstream:
                     update = {'summary': self.config["short_desc template"] % package,
-                              'comment': self.config["description template"] % package
+                              'comment': {'body': self.config["description template"] % package, 'is_private': False},
+                              'ids': [open_bug.bug_id],
                              }
                     log.debug("About to update bug '%s' with '%r'" % (open_bug.bug_id, update))
-                    res = self.bz._update_bug(open_bug.bug_id, update)
+                    res = self.bz._proxy.Bug.update(update)
                     log.debug("Result from bug update: %r" % res)
                     log.info("Updated bug: %s" % self.bug_url(open_bug))
                     return self.bug_url(open_bug)
