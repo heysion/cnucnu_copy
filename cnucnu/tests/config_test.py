@@ -40,7 +40,7 @@ class ConfigTest(unittest.TestCase):
         c.update(new)
 
         self.assertEqual(c.config, expected)
-    
+
     def testComplexUpdate(self):
         old = {0: 0, "d": {0: 0, 1: 1, 2: 2}, 2: {}}
         new = {1: 1, "d": {1: {0: 0}, 2: None}}
@@ -50,7 +50,7 @@ class ConfigTest(unittest.TestCase):
         c.update(new)
 
         self.assertEqual(c.config, expected)
-    
+
 if __name__ == "__main__":
     suite = unittest.TestLoader().loadTestsFromTestCase(ConfigTest)
     unittest.TextTestRunner(verbosity=2).run(suite)

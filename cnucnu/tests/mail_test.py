@@ -35,14 +35,14 @@ class MailTest(unittest.TestCase):
         receipient = "ß <l@example.com>"
         subject = "ä"
         message = "Ö"
-        
+
         m = Message(sender, receipient, subject, message)
         self.assertEqual(m.receipient, receipient)
         self.assertEqual(m.sender, sender)
         message_string = 'MIME-Version: 1.0\nContent-Type: text/plain; charset="utf-8"\nContent-Transfer-Encoding: base64\nSubject: =?utf-8?b?w6Q=?=\nFrom: =?utf-8?b?TXIuIFVtbMOkdXQ=?= <u@example.com>\nTo: =?utf-8?b?w58=?= <l@example.com>\n\nw5Y=\n'
         self.assertEqual(message_string, m.as_string())
-    
-    
+
+
 if __name__ == "__main__":
     suite = unittest.TestLoader().loadTestsFromTestCase(MailTest)
     unittest.TextTestRunner(verbosity=2).run(suite)
