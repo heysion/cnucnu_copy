@@ -52,6 +52,24 @@ class PackageTest(unittest.TestCase):
         self.assertEqual(p._latest_upstream, None)
         self.assertEqual(p._rpm_diff, None)
 
+    def testUpstreamVersions(self):
+        """ Test finding upstream versions
+        """
+        # default matching
+        p = Package("cnucnu_test", "DEFAULT", "test_url", Repository())
+        p._html = "cnucnu_test-1.23.tar.gz"
+        self.assertEqual(p.upstream_versions, ["1.23"])
+
+        # multiple groups
+        p = Package("cnucnu_test", "cnucnu_test-([1-9]+\.[1-9]+\.[1-9]+)-p([0-9]+)\.tar\.gz", "test_url", Repository())
+        p._html = "cnucnu_test-1.2.3-p4.tar.gz"
+        self.assertEqual(p.upstream_versions, ["1.2.3.4"])
+
+        # empty group
+        p = Package("cnucnu_test", "cnucnu_test-([1-9]+\.[1-9]+\.[1-9]+)(-p([0-9]+))?\.tar\.gz", "test_url", Repository())
+        p._html = "cnucnu_test-1.2.3.tar.gz"
+        self.assertEqual(p.upstream_versions, ["1.2.3"])
+
 if __name__ == "__main__":
     suite = unittest.TestLoader().loadTestsFromTestCase(PackageTest)
     unittest.TextTestRunner(verbosity=2).run(suite)

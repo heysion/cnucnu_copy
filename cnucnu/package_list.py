@@ -269,7 +269,10 @@ class Package(object):
                 upstream_versions = re.findall(self.regex, self.html)
             except sre_constants.error, e:
                 raise cc_errors.UpstreamVersionRetrievalError("%s: invalid regular expression" % self.name)
-            for version in upstream_versions:
+            for index, version in enumerate(upstream_versions):
+                if type(version) == tuple:
+                    version = ".".join([v for v in version if not v == ""])
+                    upstream_versions[index] = version
                 if " " in version:
                     raise cc_errors.UpstreamVersionRetrievalError("%s: invalid upstream version:>%s< - %s - %s " % (self.name, version, self.url, self.regex))
             if len(upstream_versions) == 0:
