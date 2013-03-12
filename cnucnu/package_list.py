@@ -158,6 +158,10 @@ class Package(object):
             # strip "rubygem-" prefix only if name was not overridden
             if not name_override and name.startswith("rubygem-"):
                 name = name[len("rubygem-"):]
+        elif regex == "NPM-DEFAULT":
+            # strip "nodejs-" prefix only if name was not overridden
+            if not name_override and name.startswith("nodejs-"):
+                name = name[len("nodejs-"):]
 
         # no elif here, because the previous regex aliases are only for name altering
         if regex == "DEFAULT":
@@ -176,6 +180,8 @@ class Package(object):
             regex = 'href="([0-9][0-9.]*)/"'
         elif regex == "RUBYGEMS-DEFAULT":
             regex = '"gem_uri":"http:\/\/rubygems.org\/gems\/%s-([0-9.]*?)\.gem"' % re.escape(name)
+        elif regex == "NPM-DEFAULT":
+            regex = '"version":"([0-9.]*?)"'
 
         self.__regex = regex
         self._invalidate_caches()
@@ -234,6 +240,12 @@ class Package(object):
             if not name_override and name.startswith("rubygem-"):
                 name = name[len("rubygem-"):]
             url = "http://rubygems.org/api/v1/gems/%s.json" % name
+        elif url == "NPM-DEFAULT":
+            # strip "nodejs-" prefix only if name was not overridden
+            if not name_override and name.startswith("nodejs-"):
+                name = name[len("nodejs-"):]
+            url = "http://registry.npmjs.org/%s" % name
+
 
         self.__url = url
         self.html = None
