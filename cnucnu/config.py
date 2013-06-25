@@ -41,7 +41,7 @@ bugzilla:
     short_desc template: "%%(name)s-%%(latest_upstream)s is available"
     description template: 'Latest upstream release: %%(latest_upstream)s
 
-                           Current version in %%(repo_name)s: %%(repo_version)s
+                           Current version/release in %%(repo_name)s: %%(repo_version)s-%%(repo_release)s
 
                            URL: %%(url)s
 
