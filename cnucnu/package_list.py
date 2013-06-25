@@ -220,7 +220,7 @@ class Package(object):
         elif url == "GOOGLE-DEFAULT":
             url = "http://code.google.com/p/%s/downloads/list" % name
         elif url == "PYPI-DEFAULT":
-            url = "http://pypi.python.org/packages/source/%s/%s" % (name[0], name)
+            url = "https://pypi.python.org/packages/source/%s/%s/" % (name[0], name)
         elif url == "PEAR-DEFAULT":
             # strip "php-pear-" prefix only if name was not overridden
             if not name_override and name.startswith("php-pear-"):
