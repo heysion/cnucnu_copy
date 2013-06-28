@@ -24,7 +24,7 @@ import os
 import cnucnu
 import cnucnu.errors as cc_errors
 from cnucnu.config import global_config
-from cnucnu.package_list import Repository, PackageList, Package
+from cnucnu.package_list import Repository, PackageList
 from cnucnu.checkshell import CheckShell
 from cnucnu.bugzilla_reporter import BugzillaReporter
 from cnucnu.scm import SCM
@@ -35,14 +35,13 @@ pprint = pp.pprint
 
 log = logging.getLogger('cnucnu')
 
+
 class Actions(object):
     def action_report_outdated(self, args):
         """ file bugs for outdated packages """
         br = BugzillaReporter(global_config.bugzilla_config)
         repo = Repository(**global_config.config["repo"])
         scm = SCM(**global_config.config["scm"])
-
-        outdated = []
 
         pl = PackageList(repo=repo, scm=scm, br=br, **global_config.config["package list"])
         for p in pl:
@@ -74,7 +73,7 @@ class Actions(object):
         sys.exit(0)
 
     def action_shell(self, args):
-        """ run interavtive shell """
+        """ run interactive shell """
         shell = CheckShell(config=global_config)
         while True:
             if not shell.cmdloop():
@@ -91,7 +90,7 @@ class Actions(object):
 
     def action(self, action):
         action = action.replace("-", "_")
-        return getattr(self, "action_"+action)
+        return getattr(self, "action_" + action)
 
     def do(self, action, args):
         return self.action(action)(args)
@@ -114,7 +113,6 @@ if __name__ == '__main__':
         command_parser = subparsers.add_parser(action, help=help_text)
 
     args = parser.parse_args()
-
 
     logging.basicConfig(level=getattr(logging, args.loglevel.upper()))
 

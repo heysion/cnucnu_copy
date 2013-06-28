@@ -23,8 +23,9 @@
 __docformat__ = "restructuredtext"
 
 # python default modules
+import re
 # sre_constants contains re exceptions
-import re, sre_constants
+import sre_constants
 import urllib
 
 # cnucnu modules
@@ -38,6 +39,7 @@ from helper import cmp_upstream_repo
 #extra modules
 import pycurl
 from fedora.client.pkgdb import PackageDB
+
 
 class Repository:
     def __init__(self, name="", path=""):
@@ -147,12 +149,12 @@ class Package(object):
         elif regex == "PEAR-DEFAULT":
             # strip "php-pear-" prefix only if name was not overridden
             if not name_override and name.startswith("php-pear-"):
-                name = name[len("php-pear-"):].replace("-","_")
+                name = name[len("php-pear-"):].replace("-", "_")
                 regex = "DEFAULT"
         elif regex == "PECL-DEFAULT":
             # strip "php-pecl-" prefix only if name was not overridden
             if not name_override and name.startswith("php-pecl-"):
-                name = name[len("php-pecl-"):].replace("-","_")
+                name = name[len("php-pecl-"):].replace("-", "_")
                 regex = "DEFAULT"
         elif regex == "RUBYGEMS-DEFAULT":
             # strip "rubygem-" prefix only if name was not overridden
@@ -224,12 +226,12 @@ class Package(object):
         elif url == "PEAR-DEFAULT":
             # strip "php-pear-" prefix only if name was not overridden
             if not name_override and name.startswith("php-pear-"):
-                name = name[len("php-pear-"):].replace("-","_")
+                name = name[len("php-pear-"):].replace("-", "_")
             url = "http://pear.php.net/package/%s/download" % name
         elif url == "PECL-DEFAULT":
             # strip "php-pecl-" prefix only if name was not overridden
             if not name_override and name.startswith("php-pecl-"):
-                name = name[len("php-pecl-"):].replace("-","_")
+                name = name[len("php-pecl-"):].replace("-", "_")
             url = "http://pecl.php.net/package/%s/download" % name
         elif url == "LP-DEFAULT":
             url = "https://launchpad.net/%s/+download" % name
@@ -245,7 +247,6 @@ class Package(object):
             if not name_override and name.startswith("nodejs-"):
                 name = name[len("nodejs-"):]
             url = "http://registry.npmjs.org/%s" % name
-
 
         self.__url = url
         self.html = None
@@ -312,13 +313,13 @@ class Package(object):
     @property
     def repo_version(self):
         if not self._repo_version:
-            self._repo_version  = self.repo.package_version(self)
+            self._repo_version = self.repo.package_version(self)
         return self._repo_version
 
     @property
     def repo_release(self):
         if not self._repo_release:
-            self._repo_release  = self.repo.package_release(self)
+            self._repo_release = self.repo.package_release(self)
         return self._repo_release
 
     @property
