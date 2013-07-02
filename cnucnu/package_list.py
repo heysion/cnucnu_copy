@@ -410,7 +410,7 @@ class PackageList:
 
             packages = []
             repo.package_list = self
-            package_line_regex = re.compile('\s+\\*\s+(\S+)\s+(.+)\s+(\S+)\s*')
+            package_line_regex = re.compile('^\s+\\*\s+(\S+)\s+(.+?)\s+(\S+)\s*$')
             for package_data in helper.match_interval(page_text, package_line_regex, "== List Of Packages ==", "<!-- END LIST OF PACKAGES -->"):
                 (name, regex, url) = package_data
                 nagging = True
