@@ -44,23 +44,27 @@ class Actions(object):
         scm = SCM(**global_config.config["scm"])
 
         pl = PackageList(repo=repo, scm=scm, br=br, **global_config.config["package list"])
-        for p in pl:
-            if p.name >= args.start_with:
-                log.info("checking package '%s'", p.name)
+        package_count = len(pl)
+        log.info("Checking '%i' packages", package_count)
+        for number, package in enumerate(pl, start=1):
+            if package.name >= args.start_with:
+                log.info("checking package '%s' (%i/%i)", package.name, number, package_count)
                 try:
-                    if p.upstream_newer:
-                        print "package '%s' outdated (%s < %s)" % (p.name, p.repo_version, p.latest_upstream)
-                        bug_url = p.report_outdated(dry_run=args.dry_run)
+                    if package.upstream_newer:
+                        print "package '%s' outdated (%s < %s)" % (package.name,
+                                                                   package.repo_version,
+                                                                   package.latest_upstream)
+                        bug_url = package.report_outdated(dry_run=args.dry_run)
                         if bug_url:
                             print bug_url
                 except cc_errors.UpstreamVersionRetrievalError, e:
-                    log.error("Failed to fetch upstream information for package '%s' (%s)" % (p.name, e.message))
+                    log.error("Failed to fetch upstream information for package '%s' (%s)" % (package.name, e.message))
                 except cc_errors.PackageNotFoundError, e:
                     log.error(e)
                 except Exception, e:
-                    log.exception("Exception occured while processing package '%s':\n%s" % (p.name, pp.pformat(e)))
+                    log.exception("Exception occured while processing package '%s':\n%s" % (package.name, pp.pformat(e)))
             else:
-                log.info("skipping package '%s'", p.name)
+                log.info("skipping package '%s'", package.name)
 
     def action_dump_config(self, args):
         """ dump config to stdout """

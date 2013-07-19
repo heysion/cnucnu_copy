@@ -420,6 +420,7 @@ class PackageList:
 
         self.packages = packages
         self.append = self.packages.append
+        self.__len__ = self.packages.__len__
 
     def __getitem__(self, key):
         if isinstance(key, int):
