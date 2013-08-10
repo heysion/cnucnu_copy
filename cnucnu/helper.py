@@ -24,6 +24,7 @@ __docformat__ = "restructuredtext"
 
 #from twisted.internet import reactor
 
+import fnmatch
 import re
 import pprint as pprint_module
 pp = pprint_module.PrettyPrinter(indent=4)
@@ -33,19 +34,23 @@ __html_regex = re.compile(r'\bhref\s*=\s*["\']([^"\'/]+)/["\']', re.I)
 __text_regex = re.compile(r'^d.+\s(\S+)\s*$', re.I|re.M)
 
 def expand_subdirs(url, glob_char="*"):
-    """ Expand glob_char in the given URL with the latest dir at that level
+    """ Expand dirs containing glob_char in the given URL with the latest
         Example URL: http://www.example.com/foo/*/
 
-        The globbing char needs to be enclosed by slashes like "/*/".
+        The globbing char can be bundled with other characters enclosed within
+        the same slashes in the URL like "/rel*/".
     """
-    glob_pattern = "/%s/" % glob_char
-    glob_pos = url.find(glob_pattern)
+    glob_pattern = "/([^/]*%s[^/]*)/" % re.escape(glob_char)
+    glob_match = re.search(glob_pattern, url)
+    if not glob_match:
+        return url
+    glob_str = glob_match.group(1)
 
-    # url until first slash before glob_char
-    url_prefix = url[0:glob_pos+1]
+    # url until first slash before glob_match
+    url_prefix = url[0:glob_match.start()+1]
 
-    # everything after the slash after glob_char
-    url_suffix = url[glob_pos+len(glob_pattern):]
+    # everything after the slash after glob_match
+    url_suffix = url[glob_match.end():]
 
     if url_prefix != "":
         dir_listing = get_html(url_prefix)
@@ -55,7 +60,7 @@ def expand_subdirs(url, glob_char="*"):
         regex = url.startswith("ftp://") and __text_regex or __html_regex
         for match in regex.finditer(dir_listing):
             subdir = match.group(1)
-            if subdir not in (".", ".."):
+            if subdir not in (".", "..") and fnmatch.fnmatch(subdir, glob_str):
                 subdirs.append(subdir)
         if not subdirs:
             return url
