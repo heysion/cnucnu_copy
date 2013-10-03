@@ -51,7 +51,8 @@ class Repository:
         import string
         self.name = name
         self.path = path
-        self.repoid = "cnucnu-%s" % "".join(c for c in name if c in string.letters)
+        self.repoid = "cnucnu-%s" % "".join(
+            c for c in name if c in string.letters)
 
         self.repofrompath = "%s,%s" % (self.repoid, self.path)
 
@@ -66,7 +67,14 @@ class Repository:
     def repoquery(self, package_names=[]):
         import subprocess as sp
         # TODO: get rid of repofrompath message even with --quiet
-        cmdline = ["/usr/bin/repoquery", "--quiet", "--archlist=src", "--all", "--repoid", self.repoid, "--qf", "%{name}\t%{version}\t%{release}"]
+        cmdline = ["/usr/bin/repoquery",
+                   "--quiet",
+                   "--archlist=src",
+                   "--all",
+                   "--repoid",
+                   self.repoid,
+                   "--qf",
+                   "%{name}\t%{version}\t%{release}"]
         if self.repofrompath:
             cmdline.extend(['--repofrompath', self.repofrompath])
         cmdline.extend(package_names)
@@ -84,7 +92,9 @@ class Repository:
         try:
             return self.nvr_dict[package.name][0]
         except KeyError:
-            raise cc_errors.PackageNotFoundError("package '%s' not found in repository '%s' (%s)" % (package.name, self.name, self.path))
+            raise cc_errors.PackageNotFoundError(
+                "package '%s' not found in repository '%s' (%s)" % (
+                    package.name, self.name, self.path))
 
     def package_release(self, package):
         return self.nvr_dict[package.name][1]
@@ -92,7 +102,8 @@ class Repository:
 
 class Package(object):
 
-    def __init__(self, name, regex, url, repo=Repository(), scm=SCM(), br=BugzillaReporter(), nagging=True):
+    def __init__(self, name, regex, url, repo=Repository(), scm=SCM(),
+                 br=BugzillaReporter(), nagging=True):
         # :TODO: add some sanity checks
         self.name = name
 
@@ -108,7 +119,6 @@ class Package(object):
         self._repo_release = None
         self._rpm_diff = None
 
-
         self.repo = repo
         self.repo_name = repo.name
         self.scm = scm
@@ -121,7 +131,8 @@ class Package(object):
         self._rpm_diff = None
 
     def __str__(self):
-        return "%(name)s: repo=%(repo_version)s upstream=%(latest_upstream)s" % self
+        return "%(name)s: repo=%(repo_version)s "\
+            "upstream=%(latest_upstream)s" % self
 
     def __repr__(self):
         return "%(name)s %(regex)s %(url)s" % self
@@ -165,7 +176,8 @@ class Package(object):
             if not name_override and name.startswith("nodejs-"):
                 name = name[len("nodejs-"):]
 
-        # no elif here, because the previous regex aliases are only for name altering
+        # no elif here, because the previous regex aliases are only for name
+        # altering
         if regex == "DEFAULT" or regex == "HACKAGE-DEFAULT":
             regex = \
                 r"\b%s[-_]" % re.escape(name)    + \
@@ -181,14 +193,16 @@ class Package(object):
         elif regex == "DIR-LISTING-DEFAULT":
             regex = 'href="([0-9][0-9.]*)/"'
         elif regex == "RUBYGEMS-DEFAULT":
-            regex = '"gem_uri":"http:\/\/rubygems.org\/gems\/%s-([0-9.]*?)\.gem"' % re.escape(name)
+            regex = \
+                '"gem_uri":"http:\/\/rubygems.org\/gems\/%s-([0-9.]*?)\.gem"' \
+                % re.escape(name)
         elif regex == "NPM-DEFAULT":
             regex = '"version":"([0-9.]*?)"'
 
         self.__regex = regex
         self._invalidate_caches()
 
-    regex = property(lambda self:self.__regex, set_regex)
+    regex = property(lambda self: self.__regex, set_regex)
 
     def set_url(self, url):
         self.raw_url = url
@@ -218,11 +232,13 @@ class Package(object):
                 name = name[len("ghc-"):]
             url = "http://hackage.haskell.org/package/%s" % name
         elif url == "DEBIAN-DEFAULT":
-            url = "http://ftp.debian.org/debian/pool/main/%s/%s/" % (name[0], name)
+            url = "http://ftp.debian.org/debian/pool/main/%s/%s/" % \
+                (name[0], name)
         elif url == "GOOGLE-DEFAULT":
             url = "http://code.google.com/p/%s/downloads/list" % name
         elif url == "PYPI-DEFAULT":
-            url = "https://pypi.python.org/packages/source/%s/%s/" % (name[0], name)
+            url = "https://pypi.python.org/packages/source/%s/%s/" % \
+                (name[0], name)
         elif url == "PEAR-DEFAULT":
             # strip "php-pear-" prefix only if name was not overridden
             if not name_override and name.startswith("php-pear-"):
@@ -251,7 +267,7 @@ class Package(object):
         self.__url = url
         self.html = None
 
-    url = property(lambda self:self.__url, set_url)
+    url = property(lambda self: self.__url, set_url)
 
     def set_html(self, html):
         self._html = html
@@ -265,7 +281,7 @@ class Package(object):
                 self.__url = expand_subdirs(self.url)
                 html = get_html(self.url)
             # TODO: get_html should raise a generic retrieval error
-            except IOError, ioe:
+            except IOError:
                 raise cc_errors.UpstreamVersionRetrievalError("%(name)s: IO error while retrieving upstream URL. - %(url)s - %(regex)s" % self)
             except pycurl.error, e:
                 raise cc_errors.UpstreamVersionRetrievalError("%(name)s: Pycurl while retrieving upstream URL. - %(url)s - %(regex)s" % self + " " + str(e))
@@ -280,7 +296,7 @@ class Package(object):
 
             try:
                 upstream_versions = re.findall(self.regex, self.html)
-            except sre_constants.error, e:
+            except sre_constants.error:
                 raise cc_errors.UpstreamVersionRetrievalError("%s: invalid regular expression" % self.name)
             for index, version in enumerate(upstream_versions):
                 if type(version) == tuple:
@@ -325,7 +341,9 @@ class Package(object):
     @property
     def rpm_diff(self):
         if not self._rpm_diff:
-            self._rpm_diff = cmp_upstream_repo(self.latest_upstream, (self.repo_version, self.repo_release))
+            self._rpm_diff = cmp_upstream_repo(self.latest_upstream,
+                                               (self.repo_version,
+                                                self.repo_release))
         return self._rpm_diff
 
     @property
@@ -373,9 +391,9 @@ class Package(object):
             return None
 
 
-
 class PackageList:
-    def __init__(self, repo=Repository(), scm=SCM(), br=BugzillaReporter(), mediawiki=False, packages=None):
+    def __init__(self, repo=Repository(), scm=SCM(), br=BugzillaReporter(),
+                 mediawiki=False, packages=None):
         """ A list of packages to be checked.
 
         :Parameters:
@@ -384,7 +402,8 @@ class PackageList:
             scm : `cnucnu.SCM`
                 SCM to compares sources files with upstream version
             mediawiki : dict
-                Get a list of package names, urls and regexes from a mediawiki page defined in the dict.
+                Get a list of package names, urls and regexes from a mediawiki
+                page defined in the dict.
             packages : [cnucnu.Package]
                 List of packages to populate the package_list with
 
@@ -416,12 +435,12 @@ class PackageList:
                 nagging = True
                 if name in ignore_packages:
                     nagging = False
-                packages.append(Package(name, regex, url, repo, scm, br, nagging=nagging))
+                packages.append(
+                    Package(name, regex, url, repo, scm, br, nagging=nagging))
 
         self.packages = packages
         self.append = self.packages.append
         self.__len__ = self.packages.__len__
-
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -431,7 +450,6 @@ class PackageList:
                 if p.name == key:
                     return p
             raise KeyError("Package %s not found" % key)
-
 
     def get(self, key, default=None):
         try:
