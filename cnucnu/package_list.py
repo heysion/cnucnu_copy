@@ -422,6 +422,7 @@ class PackageList:
         self.append = self.packages.append
         self.__len__ = self.packages.__len__
 
+
     def __getitem__(self, key):
         if isinstance(key, int):
             return self.packages[key]
@@ -430,6 +431,13 @@ class PackageList:
                 if p.name == key:
                     return p
             raise KeyError("Package %s not found" % key)
+
+
+    def get(self, key, default=None):
+        try:
+            return self.__getitem__(key)
+        except KeyError:
+            return default
 
 
 if __name__ == '__main__':
