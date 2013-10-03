@@ -166,7 +166,7 @@ class Package(object):
                 name = name[len("nodejs-"):]
 
         # no elif here, because the previous regex aliases are only for name altering
-        if regex == "DEFAULT":
+        if regex == "DEFAULT" or regex == "HACKAGE-DEFAULT":
             regex = \
                 r"\b%s[-_]" % re.escape(name)    + \
                 r"(?i)"                          + \
@@ -178,7 +178,7 @@ class Package(object):
                 r"\.(?:tar|t[bglx]z|tbz2|zip)\b"
         elif regex == "FM-DEFAULT":
             regex = '<a href="/projects/[^/]*/releases/[0-9]*">([^<]*)</a>'
-        elif regex == "HACKAGE-DEFAULT" or regex== "DIR-LISTING-DEFAULT":
+        elif regex == "DIR-LISTING-DEFAULT":
             regex = 'href="([0-9][0-9.]*)/"'
         elif regex == "RUBYGEMS-DEFAULT":
             regex = '"gem_uri":"http:\/\/rubygems.org\/gems\/%s-([0-9.]*?)\.gem"' % re.escape(name)
@@ -216,7 +216,7 @@ class Package(object):
             # strip "ghc-" prefix only if name was not overridden
             if not name_override and name.startswith("ghc-"):
                 name = name[len("ghc-"):]
-            url = "http://hackage.haskell.org/packages/archive/%s/" % name
+            url = "http://hackage.haskell.org/package/%s" % name
         elif url == "DEBIAN-DEFAULT":
             url = "http://ftp.debian.org/debian/pool/main/%s/%s/" % (name[0], name)
         elif url == "GOOGLE-DEFAULT":
