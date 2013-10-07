@@ -24,10 +24,13 @@ from helper import filter_dict
 import logging
 log = logging.getLogger('cnucnu.bugzilla_reporter')
 
-class BugzillaReporter(object):
-    base_query = {'query_format': ['advanced'], 'emailreporter1': ['1'], 'emailtype1': ['exact']}
 
-    bug_status_open = ['NEW', 'ASSIGNED', 'MODIFIED', 'ON_DEV', 'ON_QA', 'VERIFIED', 'FAILS_QA', 'RELEASE_PENDING', 'POST']
+class BugzillaReporter(object):
+    base_query = {'query_format': 'advanced',
+                  'emailreporter1': '1', 'emailtype1': 'exact'}
+
+    bug_status_open = ['NEW', 'ASSIGNED', 'MODIFIED', 'ON_DEV', 'ON_QA',
+                       'VERIFIED', 'FAILS_QA', 'RELEASE_PENDING', 'POST']
     bug_status_closed = ['CLOSED']
 
     new_bug = {}
@@ -125,20 +128,20 @@ class BugzillaReporter(object):
 
     def get_exact_outdated_bug(self, package):
         short_desc_pattern = '%(name)s-%(latest_upstream)s ' % package
-        q = {'component': [package.name],
-             'bug_status': self.bug_status_open + self.bug_status_closed,
-             'short_desc': [short_desc_pattern],
-             'short_desc_type': ['substring']
-            }
+        query = {'component': package.name,
+                 'bug_status': self.bug_status_open + self.bug_status_closed,
+                 'short_desc': short_desc_pattern,
+                 'short_desc_type': 'substring'}
 
-        q.update(self.base_query)
-        logging.debug("get_exact_outdated_bug: Bugzilla query: %s", q)
-        bugs = self.bz.query(q)
+        query.update(self.base_query)
+        logging.debug("get_exact_outdated_bug: Bugzilla query: %s", query)
+        bugs = self.bz.query(query)
         if bugs:
             # TODO if more than one bug, manual intervention might be required
             for bug in bugs:
-                # The short_desc_pattern contains a space at the end, which is currently
-                # not recognized by bugzilla. Therefore this test is required:
+                # The short_desc_pattern contains a space at the end, which is
+                # currently not recognized by bugzilla. Therefore this test is
+                # required:
                 if bug.short_desc.startswith(short_desc_pattern):
                     return bug
 
