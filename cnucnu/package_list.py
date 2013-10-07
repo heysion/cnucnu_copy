@@ -179,6 +179,10 @@ class Package(object):
         # no elif here, because the previous regex aliases are only for name
         # altering
         if regex == "DEFAULT" or regex == "HACKAGE-DEFAULT":
+            if regex == "HACKAGE-DEFAULT":
+                # strip "ghc-" prefix only if name was not overridden
+                if not name_override and name.startswith("ghc-"):
+                    name = name[len("ghc-"):]
             regex = \
                 r"\b%s[-_]" % re.escape(name)    + \
                 r"(?i)"                          + \
