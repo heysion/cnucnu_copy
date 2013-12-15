@@ -61,7 +61,11 @@ class CheckShell(cmd.Cmd):
         return self._br
 
     def update_prompt(self):
-        self.prompt = "%(name)s %(regex)s %(url)s " % self.package
+        self.prompt = "Name: {p.name}\n"\
+                      "Final Regex: {p.regex}\n"\
+                      "Final URL: {p.url}\n"\
+                      "{p.name} {p.raw_regex} {p.raw_url} ".format(
+                          p=self.package)
         self.prompt += "%s> " % self.prompt_default
 
     def default(self, line):
@@ -124,7 +128,7 @@ class CheckShell(cmd.Cmd):
         self.update_prompt()
         if self.package.url and self.package.regex:
             try:
-                print "Upstream Versions:", self.package.upstream_versions
+                print "Upstream Versions:", set(self.package.upstream_versions)
                 print "Latest:", self.package.latest_upstream
 
                 if self.package.name:
