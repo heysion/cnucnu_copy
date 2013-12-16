@@ -157,6 +157,10 @@ class Package(object):
             if not name_override and name.startswith("perl-"):
                 name = name[len("perl-"):]
                 regex = "DEFAULT"
+        elif regex == "DRUPAL-DEFAULT":
+            branch = name[6]
+            regex = \
+                "(?s)Recommended releases.*?>{0}.x-([^<]*)".format(branch)
         elif regex == "PEAR-DEFAULT":
             # strip "php-pear-" prefix only if name was not overridden
             if not name_override and name.startswith("php-pear-"):
