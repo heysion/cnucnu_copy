@@ -103,7 +103,7 @@ class Repository:
 class Package(object):
 
     def __init__(self, name, regex, url, repo=Repository(), scm=SCM(),
-                 br=BugzillaReporter(), nagging=True):
+                 br=BugzillaReporter(), package_list=None):
         # :TODO: add some sanity checks
         self.name = name
 
@@ -123,7 +123,7 @@ class Package(object):
         self.repo_name = repo.name
         self.scm = scm
         self.br = br
-        self.nagging = nagging
+        self.package_list = package_list
 
     def _invalidate_caches(self):
         self._latest_upstream = None
@@ -340,6 +340,10 @@ class Package(object):
         return self._latest_upstream
 
     @property
+    def nagging(self):
+        return self.name not in self.package_list.ignore_packages
+
+    @property
     def repo_version(self):
         if not self._repo_version:
             self._repo_version = self.repo.package_version(self)
@@ -421,6 +425,9 @@ class PackageList:
                 List of packages to populate the package_list with
 
         """
+        self.ignore_owners = []
+        self._ignore_packages = None
+
         if not mediawiki:
             mediawiki = global_config.config["package list"]["mediawiki"]
         if not packages and mediawiki:
@@ -430,30 +437,34 @@ class PackageList:
             page_text = w.get_pagesource(mediawiki["page"])
 
             ignore_owner_regex = re.compile('\\* ([^ ]*)')
-            owners = [o[0].encode("UTF-8") for o in helper.match_interval(page_text, ignore_owner_regex, "== Package Owner Ignore List ==", "<!-- END PACKAGE OWNER IGNORE LIST -->")]
-
-            pdb = PackageDB()
-            ignore_packages = []
-            for owner in owners:
-                pkgs = pdb.user_packages(owner, acls="owner")["pkgs"]
-                p_names = [p["name"] for p in pkgs]
-                ignore_packages.extend(p_names)
-            set(ignore_packages)
+            self.ignore_owners = [o[0].encode("UTF-8") for o in helper.match_interval(page_text, ignore_owner_regex, "== Package Owner Ignore List ==", "<!-- END PACKAGE OWNER IGNORE LIST -->")]
 
             packages = []
             repo.package_list = self
             package_line_regex = re.compile('^\s+\\*\s+(\S+)\s+(.+?)\s+(\S+)\s*$')
             for package_data in helper.match_interval(page_text, package_line_regex, "== List Of Packages ==", "<!-- END LIST OF PACKAGES -->"):
                 (name, regex, url) = package_data
-                nagging = True
-                if name in ignore_packages:
-                    nagging = False
                 packages.append(
-                    Package(name, regex, url, repo, scm, br, nagging=nagging))
+                    Package(name, regex, url, repo, scm, br,
+                            package_list=self))
 
         self.packages = packages
         self.append = self.packages.append
         self.__len__ = self.packages.__len__
+
+    @property
+    def ignore_packages(self):
+        if self._ignore_packages is None:
+            pdb = PackageDB(retries=5)
+            ignore_packages = []
+            for owner in self.ignore_owners:
+                pkgs = pdb.user_packages(owner, acls="owner")["pkgs"]
+                p_names = [p["name"] for p in pkgs]
+                ignore_packages.extend(p_names)
+            ignore_packages = set(ignore_packages)
+            self._ignore_packages = ignore_packages
+        return self._ignore_packages
+
 
     def __getitem__(self, key):
         if isinstance(key, int):
