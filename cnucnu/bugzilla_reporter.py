@@ -35,9 +35,11 @@ class BugzillaReporter(object):
 
     new_bug = {}
 
-    def __init__(self, config=global_config.bugzilla_config):
+    def __init__(self, config=None):
         self._bz = None
 
+        if not config:
+            config = global_config.bugzilla_config
         self.config = config
 
         self.base_query['product'] = config['product']
