@@ -214,7 +214,7 @@ class Package(object):
         name = self.name
         # allow name override with e.g. SF-DEFAULT:othername
         if url:
-            name_override = re.match(r"^((?:SF|FM|GNU|CPAN|HACKAGE|DEBIAN|GOOGLE|PEAR|PECL|PYPI|LP|GNOME|RUBYGEMS)-DEFAULT)(?::(.+))$", url)
+            name_override = re.match(r"^((?:SF|FM|GNU|CPAN|DRUPAL|HACKAGE|DEBIAN|GOOGLE|PEAR|PECL|PYPI|LP|GNOME|RUBYGEMS)-DEFAULT)(?::(.+))$", url)
             if name_override:
                 url = name_override.group(1)
                 name = name_override.group(2)
@@ -230,6 +230,11 @@ class Package(object):
             if not name_override and name.startswith("perl-"):
                 name = name[len("perl-"):]
             url = "http://search.cpan.org/dist/%s/" % name
+        elif url == "DRUPAL-DEFAULT":
+            if not name_override and (name.startswith("drupal7-") or
+                                      name.startswith("drupal6-")):
+                name = name[len("drupalX-"):]
+            url = "http://drupal.org/project/{0}".format(name)
         elif url == "HACKAGE-DEFAULT":
             # strip "ghc-" prefix only if name was not overridden
             if not name_override and name.startswith("ghc-"):
