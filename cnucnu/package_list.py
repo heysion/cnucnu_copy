@@ -298,7 +298,7 @@ class Package(object):
                 raise cc_errors.UpstreamVersionRetrievalError("%(name)s: IO error while retrieving upstream URL. - %(url)s - %(regex)s" % self)
             except pycurl.error, e:
                 raise cc_errors.UpstreamVersionRetrievalError("%(name)s: Pycurl while retrieving upstream URL. - %(url)s - %(regex)s" % self + " " + str(e))
-            self.html = html
+            self._html = html
         return self._html
 
     html = property(get_html, set_html)
