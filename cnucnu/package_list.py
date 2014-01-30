@@ -188,15 +188,16 @@ class Package(object):
                 # strip "ghc-" prefix only if name was not overridden
                 if not name_override and name.startswith("ghc-"):
                     name = name[len("ghc-"):]
-            regex = \
-                r"\b%s[-_]" % re.escape(name)    + \
-                r"(?i)"                          + \
-                r"(?:(?:src|source)[-_])?"       + \
-                r"([^-/_\s]*?"                   + \
-                r"\d"                            + \
-                r"[^-/_\s]*?)"                   + \
-                r"(?:[-_.](?:src|source|orig))?" + \
-                r"\.(?:[jt]ar|t[bglx]z|tbz2|zip)\b"
+            regex = (
+                r"(?i)"  # ignore case
+                r"\b%(name)s[-_]"  # word-boundary, name and dash/underscore
+                r"(?:(?:src|source)[-_])?"  # optional src or source string
+                r"([^-/_\s]*?"  #
+                r"\d"
+                r"[^-/_\s]*?)"
+                r"(?:[-_.](?:src|source|orig))?"
+                r"\.(?:[jt]ar|t[bglx]z|tbz2|zip)\b" % {'name': re.escape(name)}
+            )
         elif regex == "FM-DEFAULT":
             regex = '<a href="/projects/[^/]*/releases/[0-9]*">([^<]*)</a>'
         elif regex == "DIR-LISTING-DEFAULT":
