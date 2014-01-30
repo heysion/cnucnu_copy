@@ -23,6 +23,7 @@
 __docformat__ = "restructuredtext"
 
 # python default modules
+import fnmatch
 import re
 # sre_constants contains re exceptions
 import sre_constants
@@ -444,9 +445,15 @@ class PackageList:
             package_line_regex = re.compile('^\s+\\*\s+(\S+)\s+(.+?)\s+(\S+)\s*$')
             for package_data in helper.match_interval(page_text, package_line_regex, "== List Of Packages ==", "<!-- END LIST OF PACKAGES -->"):
                 (name, regex, url) = package_data
-                packages.append(
-                    Package(name, regex, url, repo, scm, br,
-                            package_list=self))
+                matched_names = fnmatch.filter(repo.nvr_dict.keys(), name)
+                if len(matched_names) == 0:
+                    # Add non-matching name to trigger an error/warning later
+                    # FIXME: Properly report bad names
+                    matched_names = [name]
+                for name in matched_names:
+                    packages.append(
+                        Package(name, regex, url, repo, scm, br,
+                                package_list=self))
 
         self.packages = packages
         self.append = self.packages.append
