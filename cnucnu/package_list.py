@@ -81,9 +81,9 @@ class Repository:
         cmdline.extend(package_names)
 
         repoquery = sp.Popen(cmdline, stdout=sp.PIPE)
-        (list, stderr) = repoquery.communicate()
+        (list_, stderr) = repoquery.communicate()
         new_nvr_dict = {}
-        for line in list.split("\n"):
+        for line in list_.split("\n"):
             if line != "":
                 name, version, release = line.split("\t")
                 new_nvr_dict[name] = (version, release)
