@@ -473,7 +473,6 @@ class PackageList:
             self._ignore_packages = ignore_packages
         return self._ignore_packages
 
-
     def __getitem__(self, key):
         if isinstance(key, int):
             return self.packages[key]
