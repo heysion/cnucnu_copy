@@ -19,7 +19,8 @@
 
 . setup-env.sh
 
-cnucnu/tests/package_list_test.py
-cnucnu/tests/mail_test.py
+cnucnu/tests/aliases_test.py
 cnucnu/tests/config_test.py
 cnucnu/tests/helper_test.py
+cnucnu/tests/mail_test.py
+cnucnu/tests/package_list_test.py

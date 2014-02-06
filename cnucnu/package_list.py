@@ -46,6 +46,134 @@ from cnucnu.scm import SCM
 from cnucnu.wiki import MediaWiki
 
 
+def restore_underscore(name):
+    return name.replace("-", "_")
+
+
+ALIASES = {
+    "CPAN-DEFAULT": {
+        "prefix": "perl-",
+        "url": "http://search.cpan.org/dist/{name}/",
+    },
+    "DEBIAN-DEFAULT": {
+        "url": "http://ftp.debian.org/debian/pool/main/{name[0]}/{name}/",
+    },
+    "DEFAULT": {
+        "regex":
+        r"(?i)"  # ignore case
+        r"\b{name}[-_]"  # word-boundary, name and dash/underscore
+        r"(?:(?:src|source)[-_])?"  # optional src or source string
+        r"([^-/_\s]*?"  #
+        r"\d"
+        r"[^-/_\s]*?)"
+        r"(?:[-_.](?:src|source|orig))?"
+        r"\.(?:[jt]ar|t[bglx]z|tbz2|zip)\b"
+    },
+    "DIR-LISTING-DEFAULT": {
+        "regex": 'href="([0-9][0-9.]*)/"'
+    },
+    "DRUPAL-DEFAULT": {
+        "prefix": ["drupal6-", "drupal7-"],
+        "regex": "(?s)Recommended releases.*?>{raw_name[6]}.x-([^<]*)",
+        "url": "http://drupal.org/project/{name}",
+    },
+    "FM-DEFAULT": {
+        "regex": '<a href="/projects/[^/]*/releases/[0-9]*">([^<]*)</a>',
+        "url": "http://freshmeat.net/projects/{name}",
+    },
+    "GNU-DEFAULT": {
+        "url": "http://ftp.gnu.org/gnu/{name}/"
+    },
+    "GNOME-DEFAULT": {
+        "url": "http://download.gnome.org/sources/{name}/*/",
+    },
+    "GOOGLE-DEFAULT": {
+    "url": "http://code.google.com/p/{name}/downloads/list"
+    },
+    "HACKAGE-DEFAULT": {
+        "prefix": "ghc-",
+        "url": "http://hackage.haskell.org/package/{name}",
+    },
+    "LP-DEFAULT": {
+        "url": "https://launchpad.net/{name}/+download"
+    },
+    "NPM-DEFAULT": {
+        "prefix": "nodejs-",
+        "regex": '"version":"([0-9.]*?)"',
+        "url": "http://registry.npmjs.org/{name}",
+    },
+    "PEAR-DEFAULT": {
+        "name_modifiers": [restore_underscore],
+        "prefix": "php-pear-",
+        "url": "http://pear.php.net/package/{name}/download",
+    },
+    "PECL-DEFAULT": {
+        "name_modifiers": [restore_underscore],
+        "prefix": "php-pecl-",
+        "url": "http://pecl.php.net/package/{name}/download",
+    },
+    "PYPI-DEFAULT": {
+        "url": "https://pypi.python.org/packages/source/{name[0]}/{name}/",
+    },
+    "RUBYGEMS-DEFAULT": {
+        "prefix": "rubygem-",
+        "regex":
+        '"gem_uri":"http:\/\/rubygems.org\/gems\/{name}-([0-9.]*?)\.gem"',
+        "url": "http://rubygems.org/api/v1/gems/{name}.json",
+    },
+    "SF-DEFAULT": {
+        "url": "http://sourceforge.net/api/file/index/project-name/{name}/"
+        "mtime/desc/limit/200/rss"
+    },
+}
+
+
+def unalias(name, value, what):
+    """ Unalias `value` for package `name`.
+    :param what: "regex" or "url"
+    :returns: Unaliased value
+    """
+
+    raw_name = name
+
+    # allow name override with e.g. DEFAULT:othername
+    if value and ":" in value:
+        alias, name_override = value.split(":", 1)
+        if alias in ALIASES.keys():
+            value = alias
+            name = name_override
+    else:
+        name_override = False
+
+    # Use while loop to allow to fall back to DEFAULT value
+    while value in ALIASES.keys():
+        if not name_override:
+            prefixes = ALIASES[value].get("prefix", [])
+            if isinstance(prefixes, basestring):
+                prefixes = [prefixes]
+            for prefix in prefixes:
+                if name.startswith(prefix):
+                    name = name[len(prefix):]
+
+            name_modifiers = ALIASES[value].get("name_modifiers", [])
+            for modifier in name_modifiers:
+                name = modifier(name)
+
+        # Use DEFAULT regex if None is defined
+        value = ALIASES[value].get(what, "DEFAULT")
+        if what == "regex":
+            format_values = {"name": re.escape(name),
+                             "raw_name": re.escape(raw_name)}
+        elif what == "url":
+            format_values = {"name": urllib.quote(name, safe=""),
+                             "raw_name": urllib.quote(raw_name, safe="")}
+        else:
+            raise NotImplementedError("what needs ot be 'regex' or 'url'")
+
+        value = value.format(**format_values)
+    return value
+
+
 class Repository:
     def __init__(self, name="", path=""):
         if not (name and path):
@@ -145,73 +273,7 @@ class Package(object):
 
     def set_regex(self, regex):
         self.raw_regex = regex
-
-        name = self.name
-        # allow name override with e.g. DEFAULT:othername
-        if regex:
-            name_override = re.match(r"^((?:FM-)?DEFAULT)(?::(.+))$", regex)
-            if name_override:
-                regex = name_override.group(1)
-                name = name_override.group(2)
-
-        # use DEFAULT regex but alter the name
-        if regex == "CPAN-DEFAULT":
-            # strip "perl-" prefix only if name was not overridden
-            if not name_override and name.startswith("perl-"):
-                name = name[len("perl-"):]
-            regex = "DEFAULT"
-        elif regex == "HACKAGE-DEFAULT":
-            # strip "ghc-" prefix only if name was not overridden
-            if not name_override and name.startswith("ghc-"):
-                name = name[len("ghc-"):]
-            regex = "DEFAULT"
-        elif regex == "PEAR-DEFAULT":
-            # strip "php-pear-" prefix only if name was not overridden
-            if not name_override and name.startswith("php-pear-"):
-                name = name[len("php-pear-"):].replace("-", "_")
-            regex = "DEFAULT"
-        elif regex == "PECL-DEFAULT":
-            # strip "php-pecl-" prefix only if name was not overridden
-            if not name_override and name.startswith("php-pecl-"):
-                name = name[len("php-pecl-"):].replace("-", "_")
-            regex = "DEFAULT"
-        elif regex == "RUBYGEMS-DEFAULT":
-            # strip "rubygem-" prefix only if name was not overridden
-            if not name_override and name.startswith("rubygem-"):
-                name = name[len("rubygem-"):]
-        elif regex == "NPM-DEFAULT":
-            # strip "nodejs-" prefix only if name was not overridden
-            if not name_override and name.startswith("nodejs-"):
-                name = name[len("nodejs-"):]
-
-        # no elif here, because the previous regex aliases are only for name
-        # altering
-        if regex == "DEFAULT":
-            regex = (
-                r"(?i)"  # ignore case
-                r"\b%(name)s[-_]"  # word-boundary, name and dash/underscore
-                r"(?:(?:src|source)[-_])?"  # optional src or source string
-                r"([^-/_\s]*?"  #
-                r"\d"
-                r"[^-/_\s]*?)"
-                r"(?:[-_.](?:src|source|orig))?"
-                r"\.(?:[jt]ar|t[bglx]z|tbz2|zip)\b" % {'name': re.escape(name)}
-            )
-        elif regex == "DRUPAL-DEFAULT":
-            branch = name[6]
-            regex = \
-                "(?s)Recommended releases.*?>{0}.x-([^<]*)".format(branch)
-        elif regex == "FM-DEFAULT":
-            regex = '<a href="/projects/[^/]*/releases/[0-9]*">([^<]*)</a>'
-        elif regex == "DIR-LISTING-DEFAULT":
-            regex = 'href="([0-9][0-9.]*)/"'
-        elif regex == "RUBYGEMS-DEFAULT":
-            regex = \
-                '"gem_uri":"http:\/\/rubygems.org\/gems\/%s-([0-9.]*?)\.gem"' \
-                % re.escape(name)
-        elif regex == "NPM-DEFAULT":
-            regex = '"version":"([0-9.]*?)"'
-
+        regex = unalias(self.name, regex, "regex")
         self.__regex = regex
         self._invalidate_caches()
 
@@ -219,72 +281,7 @@ class Package(object):
 
     def set_url(self, url):
         self.raw_url = url
-
-        name = self.name
-        # allow name override with e.g. SF-DEFAULT:othername
-        if url:
-            name_override = re.match(
-                r"^((?:SF|FM|GNU|CPAN|DRUPAL|HACKAGE|DEBIAN|GOOGLE|PEAR|PECL|"
-                "PYPI|LP|GNOME|RUBYGEMS)-DEFAULT)(?::(.+))$", url)
-            if name_override:
-                url = name_override.group(1)
-                name = name_override.group(2)
-        name = urllib.quote(name, safe='')
-        if url == "SF-DEFAULT":
-            url = "http://sourceforge.net/api/file/index/project-name/%s/" \
-                "mtime/desc/limit/200/rss" % name
-        elif url == "FM-DEFAULT":
-            url = "http://freshmeat.net/projects/%s" % name
-        elif url == "GNU-DEFAULT":
-            url = "http://ftp.gnu.org/gnu/%s/" % name
-        elif url == "CPAN-DEFAULT":
-            # strip "perl-" prefix only if name was not overridden
-            if not name_override and name.startswith("perl-"):
-                name = name[len("perl-"):]
-            url = "http://search.cpan.org/dist/%s/" % name
-        elif url == "DRUPAL-DEFAULT":
-            if not name_override and (name.startswith("drupal7-") or
-                                      name.startswith("drupal6-")):
-                name = name[len("drupalX-"):]
-            url = "http://drupal.org/project/{0}".format(name)
-        elif url == "HACKAGE-DEFAULT":
-            # strip "ghc-" prefix only if name was not overridden
-            if not name_override and name.startswith("ghc-"):
-                name = name[len("ghc-"):]
-            url = "http://hackage.haskell.org/package/%s" % name
-        elif url == "DEBIAN-DEFAULT":
-            url = "http://ftp.debian.org/debian/pool/main/%s/%s/" % \
-                (name[0], name)
-        elif url == "GOOGLE-DEFAULT":
-            url = "http://code.google.com/p/%s/downloads/list" % name
-        elif url == "PYPI-DEFAULT":
-            url = "https://pypi.python.org/packages/source/%s/%s/" % \
-                (name[0], name)
-        elif url == "PEAR-DEFAULT":
-            # strip "php-pear-" prefix only if name was not overridden
-            if not name_override and name.startswith("php-pear-"):
-                name = name[len("php-pear-"):].replace("-", "_")
-            url = "http://pear.php.net/package/%s/download" % name
-        elif url == "PECL-DEFAULT":
-            # strip "php-pecl-" prefix only if name was not overridden
-            if not name_override and name.startswith("php-pecl-"):
-                name = name[len("php-pecl-"):].replace("-", "_")
-            url = "http://pecl.php.net/package/%s/download" % name
-        elif url == "LP-DEFAULT":
-            url = "https://launchpad.net/%s/+download" % name
-        elif url == "GNOME-DEFAULT":
-            url = "http://download.gnome.org/sources/%s/*/" % name
-        elif url == "RUBYGEMS-DEFAULT":
-            # strip "rubygem-" prefix only if name was not overridden
-            if not name_override and name.startswith("rubygem-"):
-                name = name[len("rubygem-"):]
-            url = "http://rubygems.org/api/v1/gems/%s.json" % name
-        elif url == "NPM-DEFAULT":
-            # strip "nodejs-" prefix only if name was not overridden
-            if not name_override and name.startswith("nodejs-"):
-                name = name[len("nodejs-"):]
-            url = "http://registry.npmjs.org/%s" % name
-
+        url = unalias(self.name, url, "url")
         self.__url = url
         self.html = None
 
