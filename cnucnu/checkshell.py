@@ -27,11 +27,11 @@ import thread
 
 import simplemediawiki
 
-from package_list import Package, PackageList, Repository
-from bugzilla_reporter import BugzillaReporter
-from helper import pprint
-from scm import SCM
-from errors import UpstreamVersionRetrievalError, PackageNotFoundError
+from cnucnu.package_list import Package, PackageList, Repository
+from cnucnu.bugzilla_reporter import BugzillaReporter
+from cnucnu.helper import pprint
+from cnucnu.scm import SCM
+from cnucnu.errors import UpstreamVersionRetrievalError, PackageNotFoundError
 
 try:
     import fedora_cert
@@ -158,7 +158,8 @@ class CheckShell(cmd.Cmd):
                 self._br = BugzillaReporter(bugzilla_config)
 
             except Exception, e:
-                print "Cannot query bugzilla, maybe config is faulty or missing", repr(e), dict(e), str(e)
+                print "Cannot query bugzilla, faulty/missing config?", repr(e),
+                dict(e), str(e)
         return self._br
 
     def update_prompt(self):
@@ -193,7 +194,8 @@ class CheckShell(cmd.Cmd):
         print self.package.html
 
     def complete_inspect(self, text, line, begidx, endidx):
-        package_names = [p.name for p in self.package_list if p.name.startswith(text)]
+        package_names = [p.name for p in self.package_list if
+                         p.name.startswith(text)]
         return package_names
 
     def do_inspect(self, args):
@@ -203,7 +205,8 @@ class CheckShell(cmd.Cmd):
             print ke
 
     def do_name(self, args):
-        self.package = Package(args, self.package.regex, self.package.url, self.repo)
+        self.package = Package(args, self.package.regex, self.package.url,
+                               self.repo)
         if not self.package.regex:
             self.package.regex = "DEFAULT"
         if not self.package.url:
@@ -248,7 +251,8 @@ class CheckShell(cmd.Cmd):
                 print "Latest:", self.package.latest_upstream
 
                 if self.package.name:
-                    print "%(repo_name)s Version: %(repo_version)s %(repo_release)s %(status)s" % self.package
+                    print "%(repo_name)s Version: %(repo_version)s"\
+                        " %(repo_release)s %(status)s" % self.package
 
                     sourcefile = self.package.upstream_version_in_scm
                     if sourcefile:
@@ -257,10 +261,14 @@ class CheckShell(cmd.Cmd):
                         print "Not Found in SCM"
                     bug = self.package.exact_outdated_bug
                     if bug:
-                        print "Exact Bug:", "%s %s:%s" % (self.br.bug_url(bug), bug.bug_status, bug.short_desc)
+                        print "Exact Bug:", "%s %s:%s" % (self.br.bug_url(bug),
+                                                          bug.bug_status,
+                                                          bug.short_desc)
                     bug = self.package.open_outdated_bug
                     if bug:
-                        print "Open Bug:", "%s %s:%s" % (self.br.bug_url(bug), bug.bug_status, bug.short_desc)
+                        print "Open Bug:", "%s %s:%s" % (self.br.bug_url(bug),
+                                                         bug.bug_status,
+                                                         bug.short_desc)
             except UpstreamVersionRetrievalError, uvre:
                 print "\x1b[1mCannot retrieve upstream Version:\x1b[0m", uvre
             except PackageNotFoundError, e:
