@@ -52,8 +52,10 @@ class BugzillaReporter(object):
         self.new_bug['platform'] = 'Unspecified'
         self.new_bug['bug_severity'] = 'unspecified'
         # Using ASSIGNED returns an exception:
-        # <Fault 32000: 'You are not allowed to file new bugs with the\n      ASSIGNED status.'>
-        # if the account is in editbugs, fedora_bugs, fedora_contrib, setpriority
+        # <Fault 32000: 'You are not allowed to file new bugs with the\n
+        #  ASSIGNED status.'>
+        # if the account is in editbugs, fedora_bugs, fedora_contrib,
+        # setpriority
         # if not, then it is silently ignored
         #               'status': 'ASSIGNED',
         # Red Hat Bugzilla now supports filing bugs in state ASSIGNED:
@@ -69,8 +71,6 @@ class BugzillaReporter(object):
             self._bz = Bugzilla(**rpc_conf)
         return self._bz
 
-
-
     def bug_url(self, bug):
         if isinstance(bug, str):
             bug_id = bug
@@ -82,7 +82,8 @@ class BugzillaReporter(object):
     def report_outdated(self, package, dry_run=True):
         if not package.exact_outdated_bug:
             if not package.open_outdated_bug:
-                new_bug, change_status = self.create_outdated_bug(package, dry_run)
+                new_bug, change_status = self.create_outdated_bug(package,
+                                                                  dry_run)
                 return self.bug_url(new_bug)
             else:
                 open_bug = package.open_outdated_bug
@@ -91,29 +92,34 @@ class BugzillaReporter(object):
                 # short_desc should be '<name>-<version> <some text>'
                 # To extract the version get everything before the first space
                 # with split and then remove the name and '-' via slicing
-                bug_version = short_desc.split(" ")[0][len(package.name)+1:]
+                bug_version = short_desc.split(" ")[0][len(package.name) + 1:]
 
                 if bug_version != package.latest_upstream:
-                    update = {'summary': self.config["short_desc template"] % package,
-                              'comment': {'body': self.config["description template"] % package, 'is_private': False},
+                    update = {'summary': self.config["short_desc template"]
+                              % package,
+                              'comment': {'body':
+                                          self.config["description template"] %
+                                          package, 'is_private': False},
                               'ids': [open_bug.bug_id],
-                             }
-                    log.debug("About to update bug '%s' with '%r'" % (open_bug.bug_id, update))
+                              }
+                    log.debug("About to update bug '%s' with '%r'" % (
+                        open_bug.bug_id, update))
                     res = self.bz._proxy.Bug.update(update)
                     log.debug("Result from bug update: %r" % res)
                     log.info("Updated bug: %s" % self.bug_url(open_bug))
                     return self.bug_url(open_bug)
         else:
             bug = package.exact_outdated_bug
-            log.info("already reported:%s %s" % (self.bug_url(bug), bug.bug_status))
+            log.info("already reported:%s %s" % (self.bug_url(bug),
+                                                 bug.bug_status))
             return ""
 
-
     def create_outdated_bug(self, package, dry_run=True):
-        bug_dict = {'component': package.name,
-               'short_desc': self.config["short_desc template"] % package,
-               'description': self.config["description template"] % package
-                }
+        bug_dict = {
+            'component': package.name,
+            'short_desc': self.config["short_desc template"] % package,
+            'description': self.config["description template"] % package
+        }
         bug_dict.update(self.new_bug)
         if not dry_run:
             new_bug = self.bz.createbug(**bug_dict)
@@ -122,7 +128,9 @@ class BugzillaReporter(object):
             log.info("Created bug: %s" % self.bug_url(new_bug))
 
             if new_bug.bug_status != self.config['bug status']:
-                change_status = self.bz._proxy.bugzilla.changeStatus(new_bug.bug_id, self.config['bug status'], self.config['user'], "", "", False, False, 1)
+                change_status = self.bz._proxy.bugzilla.changeStatus(
+                    new_bug.bug_id, self.config['bug status'],
+                    self.config['user'], "", "", False, False, 1)
                 log.debug("Changed bug status %r" % change_status)
             return (new_bug, change_status)
         else:
@@ -153,7 +161,7 @@ class BugzillaReporter(object):
     def get_open_outdated_bug(self, package):
         q = {'component': [package.name],
              'bug_status': [self.config['bug status']]
-            }
+             }
 
         q.update(self.base_query)
         bugs = self.bz.query(q)
