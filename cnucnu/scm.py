@@ -22,6 +22,7 @@
 from helper import secure_download
 from config import global_config
 
+
 class SCM(object):
     """ cainfo: filename :-/
     """
@@ -58,9 +59,11 @@ class SCM(object):
         return False
 
 
-
 if __name__ == '__main__':
-    scm = SCM(**{"view_scm_url": "https://pkgs.fedoraproject.org/cgit/%(name)s.git/plain/sources", "cainfo": "fedora-server-ca.cert"})
+    scm = SCM(**{
+        "view_scm_url":
+        "https://pkgs.fedoraproject.org/cgit/%(name)s.git/plain/sources",
+        "cainfo": "fedora-server-ca.cert"})
 
     from package_list import Package, Repository
 
@@ -74,4 +77,3 @@ if __name__ == '__main__':
     print "sources:", scm.get_sources({"name": package_name})
     print "source files: ", scm.get_sourcefiles({"name": package_name})
     print "has_upstream_version ", scm.has_upstream_version(package)
-
