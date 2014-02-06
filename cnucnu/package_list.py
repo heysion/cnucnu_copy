@@ -157,26 +157,22 @@ class Package(object):
             # strip "perl-" prefix only if name was not overridden
             if not name_override and name.startswith("perl-"):
                 name = name[len("perl-"):]
-                regex = "DEFAULT"
-        elif regex == "DRUPAL-DEFAULT":
-            branch = name[6]
-            regex = \
-                "(?s)Recommended releases.*?>{0}.x-([^<]*)".format(branch)
+            regex = "DEFAULT"
         elif regex == "HACKAGE-DEFAULT":
             # strip "ghc-" prefix only if name was not overridden
             if not name_override and name.startswith("ghc-"):
                 name = name[len("ghc-"):]
-                regex = "DEFAULT"
+            regex = "DEFAULT"
         elif regex == "PEAR-DEFAULT":
             # strip "php-pear-" prefix only if name was not overridden
             if not name_override and name.startswith("php-pear-"):
                 name = name[len("php-pear-"):].replace("-", "_")
-                regex = "DEFAULT"
+            regex = "DEFAULT"
         elif regex == "PECL-DEFAULT":
             # strip "php-pecl-" prefix only if name was not overridden
             if not name_override and name.startswith("php-pecl-"):
                 name = name[len("php-pecl-"):].replace("-", "_")
-                regex = "DEFAULT"
+            regex = "DEFAULT"
         elif regex == "RUBYGEMS-DEFAULT":
             # strip "rubygem-" prefix only if name was not overridden
             if not name_override and name.startswith("rubygem-"):
@@ -199,6 +195,10 @@ class Package(object):
                 r"(?:[-_.](?:src|source|orig))?"
                 r"\.(?:[jt]ar|t[bglx]z|tbz2|zip)\b" % {'name': re.escape(name)}
             )
+        elif regex == "DRUPAL-DEFAULT":
+            branch = name[6]
+            regex = \
+                "(?s)Recommended releases.*?>{0}.x-([^<]*)".format(branch)
         elif regex == "FM-DEFAULT":
             regex = '<a href="/projects/[^/]*/releases/[0-9]*">([^<]*)</a>'
         elif regex == "DIR-LISTING-DEFAULT":
