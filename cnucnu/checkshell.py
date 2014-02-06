@@ -17,15 +17,114 @@
 #    along with cnucnu.  If not, see <http://www.gnu.org/licenses/>.
 # }}}
 
-import sys
 import cmd
+import difflib
+import getpass
+import re
 import readline
+import sys
+import thread
+
+import simplemediawiki
 
 from package_list import Package, PackageList, Repository
 from bugzilla_reporter import BugzillaReporter
 from helper import pprint
 from scm import SCM
-from errors import UpstreamVersionRetrievalError
+from errors import UpstreamVersionRetrievalError, PackageNotFoundError
+
+try:
+    import fedora_cert
+except ImportError:
+    pass
+
+
+def diff(a, b):
+    differ = difflib.Differ()
+    diff_result = differ.compare(a.splitlines(True), b.splitlines(True))
+    diff_lines = [l for l in diff_result if not l.startswith(" ")]
+    return diff_lines
+
+
+class WikiEditor(object):
+    def __init__(self, config):
+
+        try:
+            mediawiki = config["package list"]["mediawiki"]
+        except KeyError:
+            raise NotImplementedError("Only mediawiki support available")
+
+        base_url = mediawiki["base url"]
+        api_url = base_url + "api.php"
+        page = mediawiki["page"]
+
+        self.logged_in = False
+        self.mw = simplemediawiki.MediaWiki(api_url)
+        self.page = page
+
+    def _query(self, data):
+        base_query = {'action': 'query', 'titles': self.page}
+        base_query.update(data)
+        return self.mw.call(base_query)['query']['pages'].popitem()[1]
+
+    def update(self, name, data, callback, reason=""):
+        if not self.logged_in:
+            try:
+                try:
+                    fas_username = fedora_cert.read_user_cert()
+                except (fedora_cert.fedora_cert_error):
+                    raise NameError
+            except NameError:
+                fas_username = getpass.getuser("FAS username: ")
+
+            self.mw.login(
+                fas_username,
+                getpass.getpass("Password for FAS user '{0}': ".format(
+                    fas_username)))
+            self.logged_in = True
+
+        meta_data = self._query({'prop': 'info|revisions',
+                                 'intoken': 'edit'})
+
+        source = self._query(
+            {'prop': 'revisions',
+                'rvprop': 'content'})['revisions'][0]['*']
+
+        starttimestamp = meta_data["starttimestamp"]
+        edittoken = meta_data["edittoken"]
+
+        pattern = r'\n \* {0} [^\n]*\n'.format(name)
+
+        if data:
+            repl = "\n * {0}\n".format(data)
+            what = "Update"
+        else:
+            repl = "\n"
+            what = "Remove"
+        if reason:
+            reason = " - {0}".format(reason)
+        summary = "{0} {1}{2}".format(what, name, reason)
+
+        new_text = re.sub(pattern, repl, source, count=1)
+        diff_lines = diff(source, new_text)
+        if diff_lines:
+            print summary
+            sys.stdout.writelines(diff_lines)
+            response = raw_input("Apply? (Y/n)")
+
+            if response in ("", "y", "Y"):
+                def update_thread():
+                    edit = self.mw.call({'action': 'edit',
+                                        'title': self.page,
+                                        'text': new_text,
+                                        'summary': summary,
+                                        'token': edittoken,
+                                        'starttimestamp': starttimestamp})
+                    callback(edit)
+                thread.start_new_thread(update_thread, ())
+            else:
+                print "Not applied"
+
 
 class CheckShell(cmd.Cmd):
     def __init__(self, config):
@@ -40,6 +139,8 @@ class CheckShell(cmd.Cmd):
         self.config = config
         self._br = None
         self.scm = SCM()
+        self.we = WikiEditor(config=config.config)
+        self.messages = []
 
     @property
     def package_list(self):
@@ -61,12 +162,17 @@ class CheckShell(cmd.Cmd):
         return self._br
 
     def update_prompt(self):
-        self.prompt = "Name: {p.name}\n"\
-                      "Final Regex: {p.regex}\n"\
-                      "Final URL: {p.url}\n"\
-                      "{p.name} {p.raw_regex} {p.raw_url} ".format(
-                          p=self.package)
-        self.prompt += "%s> " % self.prompt_default
+        self.prompt = ""
+        if "messages" in dir(self):
+            while self.messages:
+                message = self.messages.pop()
+                self.prompt += "Message: {0}\n".format(message)
+        self.prompt += "Name: {p.name}\n"\
+                       "Final Regex: {p.regex}\n"\
+                       "Final URL: {p.url}\n"\
+                       "\x1b[1m{p.name} {p.raw_regex} {p.raw_url} ".format(
+                           p=self.package)
+        self.prompt += "%s>\x1b[0m " % self.prompt_default
 
     def default(self, line):
         if not self.package.url:
@@ -109,6 +215,16 @@ class CheckShell(cmd.Cmd):
     def do_report(self, args):
         pprint(self.package.report_outdated(dry_run=False))
 
+    def do_remove(self, args):
+        self.do_update(args, entry="")
+
+    def do_update(self, args, entry=None):
+        if entry is None:
+            entry = "{p.name} {p.raw_regex} {p.raw_url}".format(p=self.package)
+
+        self.we.update(self.package.name, entry, self.messages.append,
+                       reason=args)
+
     def do_url(self, args):
         self.package.url = args
 
@@ -146,6 +262,7 @@ class CheckShell(cmd.Cmd):
                     if bug:
                         print "Open Bug:", "%s %s:%s" % (self.br.bug_url(bug), bug.bug_status, bug.short_desc)
             except UpstreamVersionRetrievalError, uvre:
-                print "Cannot retrieve upstream Version:", uvre
+                print "\x1b[1mCannot retrieve upstream Version:\x1b[0m", uvre
+            except PackageNotFoundError, e:
+                print e
         return stop
-
