@@ -60,7 +60,7 @@ ALIASES = {
         "url": "http://download.gnome.org/sources/{name}/*/",
     },
     "GOOGLE-DEFAULT": {
-    "url": "http://code.google.com/p/{name}/downloads/list"
+        "url": "http://code.google.com/p/{name}/downloads/list"
     },
     "HACKAGE-DEFAULT": {
         "prefix": "ghc-",
