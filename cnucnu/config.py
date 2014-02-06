@@ -25,10 +25,10 @@ __docformat__ = "restructuredtext"
 from helper import pprint, filter_dict
 import yaml
 
-DEFAULT_YAML="""
+DEFAULT_YAML = """
 bugzilla:
     user: upstream-release-monitoring@fedoraproject.org
-    password: 
+    password:
     base url: https://bugzilla.redhat.com
     url: "%(base url)s/xmlrpc.cgi"
     bug url prefix: "%(base url)s/show_bug.cgi?id="
@@ -77,7 +77,8 @@ package list:
 class Config(object):
     """ Config management class for cnucnu.
     """
-    def __init__(self, yaml_file=None, yaml=None, yaml_data=None, config=None, load_default=True):
+    def __init__(self, yaml_file=None, yaml=None, yaml_data=None, config=None,
+                 load_default=True):
         # TODO: remove yaml option
         if yaml_data:
             yaml = yaml_data
@@ -151,7 +152,8 @@ class Config(object):
 
     @property
     def bugzilla_class_conf(self):
-        rpc_conf = filter_dict(self.bugzilla_config, ["url", "user", "password"])
+        rpc_conf = filter_dict(self.bugzilla_config, ["url", "user",
+                                                      "password"])
         return rpc_conf
 
     @property
@@ -179,4 +181,3 @@ if __name__ == '__main__':
 
     print "\nBugzilla class config"
     pprint(cf.bugzilla_class_conf)
-
