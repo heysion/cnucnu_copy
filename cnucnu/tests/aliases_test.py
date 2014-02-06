@@ -30,6 +30,10 @@ class AliasTest(unittest.TestCase):
         self.assertEqual(regex, ALIASES["DEFAULT"]["regex"].format(
             name="testname"))
 
+    def testOverride(self):
+        regex = unalias("testname", "TEST:", "regex")
+        self.assertEqual(regex, "TEST:")
+
     def testCPAN(self):
         url = unalias("perl-test", "CPAN-DEFAULT", "url")
         self.assertEqual(url, "http://search.cpan.org/dist/test/")

@@ -114,6 +114,9 @@ def unalias(name, value, what):
         if alias in ALIASES.keys():
             value = alias
             name = name_override
+            name_override = True
+        else:
+            name_override = False
     else:
         name_override = False
 
