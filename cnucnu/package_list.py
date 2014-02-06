@@ -162,6 +162,11 @@ class Package(object):
             branch = name[6]
             regex = \
                 "(?s)Recommended releases.*?>{0}.x-([^<]*)".format(branch)
+        elif regex == "HACKAGE-DEFAULT":
+            # strip "ghc-" prefix only if name was not overridden
+            if not name_override and name.startswith("ghc-"):
+                name = name[len("ghc-"):]
+                regex = "DEFAULT"
         elif regex == "PEAR-DEFAULT":
             # strip "php-pear-" prefix only if name was not overridden
             if not name_override and name.startswith("php-pear-"):
@@ -183,11 +188,7 @@ class Package(object):
 
         # no elif here, because the previous regex aliases are only for name
         # altering
-        if regex == "DEFAULT" or regex == "HACKAGE-DEFAULT":
-            if regex == "HACKAGE-DEFAULT":
-                # strip "ghc-" prefix only if name was not overridden
-                if not name_override and name.startswith("ghc-"):
-                    name = name[len("ghc-"):]
+        if regex == "DEFAULT":
             regex = (
                 r"(?i)"  # ignore case
                 r"\b%(name)s[-_]"  # word-boundary, name and dash/underscore
