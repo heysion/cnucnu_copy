@@ -27,19 +27,23 @@ import fnmatch
 import re
 # sre_constants contains re exceptions
 import sre_constants
+import string
+import subprocess
 import urllib
-
-# cnucnu modules
-from bugzilla_reporter import BugzillaReporter
-from config import global_config
-from scm import SCM
-import errors as cc_errors
-import helper
-from helper import cmp_upstream_repo
 
 #extra modules
 import pycurl
 from fedora.client.pkgdb import PackageDB
+
+# cnucnu modules
+from cnucnu.bugzilla_reporter import BugzillaReporter
+from cnucnu.config import global_config
+import cnucnu.errors as cc_errors
+from cnucnu import helper
+from cnucnu.helper import cmp_upstream_repo, get_html, expand_subdirs, \
+    upstream_max
+from cnucnu.scm import SCM
+from cnucnu.wiki import MediaWiki
 
 
 class Repository:
@@ -49,7 +53,6 @@ class Repository:
             name = c["name"]
             path = c["path"]
 
-        import string
         self.name = name
         self.path = path
         self.repoid = "cnucnu-%s" % "".join(
@@ -66,7 +69,6 @@ class Repository:
         return self._nvr_dict
 
     def repoquery(self, package_names=[]):
-        import subprocess as sp
         # TODO: get rid of repofrompath message even with --quiet
         cmdline = ["/usr/bin/repoquery",
                    "--quiet",
@@ -80,7 +82,7 @@ class Repository:
             cmdline.extend(['--repofrompath', self.repofrompath])
         cmdline.extend(package_names)
 
-        repoquery = sp.Popen(cmdline, stdout=sp.PIPE)
+        repoquery = subprocess.Popen(cmdline, stdout=subprocess.PIPE)
         (list_, stderr) = repoquery.communicate()
         new_nvr_dict = {}
         for line in list_.split("\n"):
@@ -221,13 +223,16 @@ class Package(object):
         name = self.name
         # allow name override with e.g. SF-DEFAULT:othername
         if url:
-            name_override = re.match(r"^((?:SF|FM|GNU|CPAN|DRUPAL|HACKAGE|DEBIAN|GOOGLE|PEAR|PECL|PYPI|LP|GNOME|RUBYGEMS)-DEFAULT)(?::(.+))$", url)
+            name_override = re.match(
+                r"^((?:SF|FM|GNU|CPAN|DRUPAL|HACKAGE|DEBIAN|GOOGLE|PEAR|PECL|"
+                "PYPI|LP|GNOME|RUBYGEMS)-DEFAULT)(?::(.+))$", url)
             if name_override:
                 url = name_override.group(1)
                 name = name_override.group(2)
         name = urllib.quote(name, safe='')
         if url == "SF-DEFAULT":
-            url = "http://sourceforge.net/api/file/index/project-name/%s/mtime/desc/limit/200/rss" % name
+            url = "http://sourceforge.net/api/file/index/project-name/%s/" \
+                "mtime/desc/limit/200/rss" % name
         elif url == "FM-DEFAULT":
             url = "http://freshmeat.net/projects/%s" % name
         elif url == "GNU-DEFAULT":
@@ -291,16 +296,18 @@ class Package(object):
 
     def get_html(self):
         if not self._html:
-            from cnucnu.helper import get_html, expand_subdirs
-
             try:
                 self.__url = expand_subdirs(self.url)
                 html = get_html(self.url)
             # TODO: get_html should raise a generic retrieval error
             except IOError:
-                raise cc_errors.UpstreamVersionRetrievalError("%(name)s: IO error while retrieving upstream URL. - %(url)s - %(regex)s" % self)
+                raise cc_errors.UpstreamVersionRetrievalError(
+                    "%(name)s: IO error while retrieving upstream URL. - "
+                    "%(url)s - %(regex)s" % self)
             except pycurl.error, e:
-                raise cc_errors.UpstreamVersionRetrievalError("%(name)s: Pycurl while retrieving upstream URL. - %(url)s - %(regex)s" % self + " " + str(e))
+                raise cc_errors.UpstreamVersionRetrievalError(
+                    "%(name)s: Pycurl while retrieving upstream URL. - "
+                    "%(url)s - %(regex)s" % self + " " + str(e))
             self._html = html
         return self._html
 
@@ -309,19 +316,23 @@ class Package(object):
     @property
     def upstream_versions(self):
         if not self._upstream_versions:
-
             try:
                 upstream_versions = re.findall(self.regex, self.html)
             except sre_constants.error:
-                raise cc_errors.UpstreamVersionRetrievalError("%s: invalid regular expression" % self.name)
+                raise cc_errors.UpstreamVersionRetrievalError(
+                    "%s: invalid regular expression" % self.name)
             for index, version in enumerate(upstream_versions):
                 if type(version) == tuple:
                     version = ".".join([v for v in version if not v == ""])
                     upstream_versions[index] = version
                 if " " in version:
-                    raise cc_errors.UpstreamVersionRetrievalError("%s: invalid upstream version:>%s< - %s - %s " % (self.name, version, self.url, self.regex))
+                    raise cc_errors.UpstreamVersionRetrievalError(
+                        "%s: invalid upstream version:>%s< - %s - %s " % (
+                            self.name, version, self.url, self.regex))
             if len(upstream_versions) == 0:
-                raise cc_errors.UpstreamVersionRetrievalError("%(name)s: no upstream version found. - %(url)s - %(regex)s" % self)
+                raise cc_errors.UpstreamVersionRetrievalError(
+                    "%(name)s: no upstream version found. - %(url)s - "
+                    "%(regex)s" % self)
 
             self._upstream_versions = upstream_versions
 
@@ -334,7 +345,6 @@ class Package(object):
     @property
     def latest_upstream(self):
         if not self._latest_upstream:
-            from cnucnu.helper import upstream_max
             self._latest_upstream = upstream_max(self.upstream_versions)
 
             # invalidate _rpm_diff cache
@@ -398,11 +408,12 @@ class Package(object):
     def report_outdated(self, dry_run=True):
         if self.nagging:
             if not self.upstream_newer:
-                print "Upstream of package not newer, report_outdated aborted!" + str(self)
+                print "Upstream not newer, report_outdated aborted!", str(self)
                 return None
 
             if self.upstream_version_in_scm:
-                print "Upstream Version found in SCM, skipping bug report: %(name)s U:%(latest_upstream)s R:%(repo_version)s" % self
+                print "Upstream Version found in SCM, skipping bug report: "\
+                    "%(name)s U:%(latest_upstream)s R:%(repo_version)s" % self
                 return None
 
             return self.br.report_outdated(self, dry_run)
@@ -435,17 +446,24 @@ class PackageList:
             mediawiki = global_config.config["package list"]["mediawiki"]
         if not packages and mediawiki:
 
-            from wiki import MediaWiki
             w = MediaWiki(base_url=mediawiki["base url"])
             page_text = w.get_pagesource(mediawiki["page"])
 
             ignore_owner_regex = re.compile('\\* ([^ ]*)')
-            self.ignore_owners = [o[0].encode("UTF-8") for o in helper.match_interval(page_text, ignore_owner_regex, "== Package Owner Ignore List ==", "<!-- END PACKAGE OWNER IGNORE LIST -->")]
+            self.ignore_owners = [
+                o[0].encode("UTF-8") for o in
+                helper.match_interval(page_text, ignore_owner_regex,
+                                      "== Package Owner Ignore List ==",
+                                      "<!-- END PACKAGE OWNER IGNORE LIST -->")
+            ]
 
             packages = []
             repo.package_list = self
-            package_line_regex = re.compile('^\s+\\*\s+(\S+)\s+(.+?)\s+(\S+)\s*$')
-            for package_data in helper.match_interval(page_text, package_line_regex, "== List Of Packages ==", "<!-- END LIST OF PACKAGES -->"):
+            package_line_regex = re.compile(
+                '^\s+\\*\s+(\S+)\s+(.+?)\s+(\S+)\s*$')
+            for package_data in helper.match_interval(
+                page_text, package_line_regex,
+                    "== List Of Packages ==", "<!-- END LIST OF PACKAGES -->"):
                 (name, regex, url) = package_data
                 matched_names = fnmatch.filter(repo.nvr_dict.keys(), name)
                 if len(matched_names) == 0:
