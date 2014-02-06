@@ -31,7 +31,8 @@ pp = pprint_module.PrettyPrinter(indent=4)
 pprint = pp.pprint
 
 __html_regex = re.compile(r'\bhref\s*=\s*["\']([^"\'/]+)/["\']', re.I)
-__text_regex = re.compile(r'^d.+\s(\S+)\s*$', re.I|re.M)
+__text_regex = re.compile(r'^d.+\s(\S+)\s*$', re.I | re.M)
+
 
 def expand_subdirs(url, glob_char="*"):
     """ Expand dirs containing glob_char in the given URL with the latest
@@ -47,7 +48,7 @@ def expand_subdirs(url, glob_char="*"):
     glob_str = glob_match.group(1)
 
     # url until first slash before glob_match
-    url_prefix = url[0:glob_match.start()+1]
+    url_prefix = url[0:glob_match.start() + 1]
 
     # everything after the slash after glob_match
     url_suffix = url[glob_match.end():]
@@ -69,6 +70,7 @@ def expand_subdirs(url, glob_char="*"):
         url = "%s%s/%s" % (url_prefix, latest, url_suffix)
         return expand_subdirs(url, glob_char)
     return url
+
 
 def get_html(url, callback=None, errback=None):
     if url.startswith("ftp://"):
@@ -110,7 +112,10 @@ def get_html(url, callback=None, errback=None):
             c.setopt(pycurl.WRITEFUNCTION, res.write)
             c.setopt(pycurl.FOLLOWLOCATION, 1)
             c.setopt(pycurl.MAXREDIRS, 10)
-            c.setopt(pycurl.USERAGENT, "Fedora Upstream Release Monitoring (https://fedoraproject.org/wiki/Upstream_release_monitoring)")
+            c.setopt(
+                pycurl.USERAGENT,
+                "Fedora Upstream Release Monitoring "
+                "(https://fedoraproject.org/wiki/Upstream_release_monitoring)")
             c.setopt(pycurl.CONNECTTIMEOUT, 10)
             c.setopt(pycurl.TIMEOUT, 30)
 
@@ -127,14 +132,17 @@ def get_html(url, callback=None, errback=None):
             res.close()
             return data
 
+
 def rpm_cmp(v1, v2):
     import rpm
     diff = rpm.labelCompare((None, v1, None), (None, v2, None))
     return diff
 
+
 def rpm_max(list):
     list.sort(cmp=rpm_cmp)
     return list[-1]
+
 
 def upstream_cmp(v1, v2):
     """ Compare two upstream versions
@@ -191,8 +199,11 @@ def upstream_cmp(v1, v2):
     return 0
 
 
-__rc_upstream_regex = re.compile("(.*?)\.?(-?(rc|pre|beta|alpha|dev)([0-9]*))", re.I)
-__rc_release_regex = re.compile(r'0\.[0-9]+\.(rc|pre|beta|alpha|dev)([0-9]*)', re.I)
+__rc_upstream_regex = re.compile("(.*?)\.?(-?(rc|pre|beta|alpha|dev)([0-9]*))",
+                                 re.I)
+__rc_release_regex = re.compile(r'0\.[0-9]+\.(rc|pre|beta|alpha|dev)([0-9]*)',
+                                re.I)
+
 
 def split_rc(version):
     """ Split (upstream) version into version and release candidate string +
@@ -208,10 +219,12 @@ def split_rc(version):
         rc_num = match.group(4)
         return (v, rc_str, rc_num)
     else:
-        # if version contains a dash, but no release candidate string is found, v != version, therefore use version here
+        # if version contains a dash, but no release candidate string is found,
+        # v != version, therefore use version here
         # Example version: 1.8.23-20100128-r1100
         # Then: v=1.8.23, but rc_str=""
         return (version, "", "")
+
 
 def get_rc(release):
     """ Get the rc value of a package's release
@@ -223,9 +236,11 @@ def get_rc(release):
     else:
         return ("", "")
 
+
 def upstream_max(list):
     list.sort(cmp=upstream_cmp)
     return list[-1]
+
 
 def cmp_upstream_repo(upstream_v, repo_vr):
     repo_rc = get_rc(repo_vr[1])
@@ -234,10 +249,12 @@ def cmp_upstream_repo(upstream_v, repo_vr):
 
     return upstream_cmp(upstream_v, repo_version)
 
+
 def filter_dict(d, key_list):
     """ return a dict that only contains keys that are in key_list
     """
     return dict([v for v in d.items() if v[0] in key_list])
+
 
 def secure_download(url, cainfo=""):
     import pycurl
@@ -274,12 +291,12 @@ def secure_download(url, cainfo=""):
 
     return data
 
+
 def match_interval(text, regex, begin_marker, end_marker):
     """ returns a list of match.groups() for all lines after a line
     like begin_marker and before a line like end_marker
     """
 
-    res = []
     inside = False
     for line in text.splitlines():
         if not inside:
