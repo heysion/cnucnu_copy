@@ -21,7 +21,7 @@ import unittest
 import sys
 sys.path.insert(0, '../..')
 
-from cnucnu.package_list import unalias, ALIASES
+from cnucnu import unalias, ALIASES
 
 
 class AliasTest(unittest.TestCase):
