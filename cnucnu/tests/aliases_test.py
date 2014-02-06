@@ -68,7 +68,7 @@ class AliasTest(unittest.TestCase):
         url = unalias("php-pear-Test-Case", "PEAR-DEFAULT", "url")
         self.assertEqual(
             url,
-            "http://pear.php.net/package/Test_Case/download"
+            "http://pear.php.net/package/Test_Case/download/All"
         )
 
 

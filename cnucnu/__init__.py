@@ -77,7 +77,7 @@ ALIASES = {
     "PEAR-DEFAULT": {
         "name_modifiers": [restore_underscore],
         "prefix": "php-pear-",
-        "url": "http://pear.php.net/package/{name}/download",
+        "url": "http://pear.php.net/package/{name}/download/All",
     },
     "PECL-DEFAULT": {
         "name_modifiers": [restore_underscore],
