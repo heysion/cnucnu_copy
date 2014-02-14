@@ -53,6 +53,10 @@ ALIASES = {
         "regex": '<a href="/projects/[^/]*/releases/[0-9]*">([^<]*)</a>',
         "url": "http://freshmeat.net/projects/{name}",
     },
+    "GITHUB-TAGS": {
+        "url": "https://api.github.com/repos/{name}/tags",
+        "regex": '"name":\s*"([\d\.]+)"',
+    },
     "GNU-DEFAULT": {
         "url": "http://ftp.gnu.org/gnu/{name}/"
     },
@@ -140,8 +144,10 @@ def unalias(name, value, what):
             format_values = {"name": re.escape(name),
                              "raw_name": re.escape(raw_name)}
         elif what == "url":
-            format_values = {"name": urllib.quote(name, safe=""),
-                             "raw_name": urllib.quote(raw_name, safe="")}
+            # Slashes need to be allowed for GITHUB alias and should not cause
+            # be used/cause trouble for other packages
+            format_values = {"name": urllib.quote(name, safe="/"),
+                             "raw_name": urllib.quote(raw_name, safe="/")}
         else:
             raise NotImplementedError("what needs ot be 'regex' or 'url'")
 
