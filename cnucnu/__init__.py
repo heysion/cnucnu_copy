@@ -55,7 +55,10 @@ ALIASES = {
     },
     "GITHUB-TAGS": {
         "url": "https://api.github.com/repos/{name}/tags",
-        "regex": '"name":\s*"([\d\.]+)"',
+        # Match strings like:
+        # "name": "v0.3.0"
+        # "name": "1.2.3"
+        "regex": '"name":\s*"[^\d]*([\d\.]+)"',
     },
     "GNU-DEFAULT": {
         "url": "http://ftp.gnu.org/gnu/{name}/"

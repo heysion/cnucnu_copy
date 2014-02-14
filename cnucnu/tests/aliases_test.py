@@ -22,6 +22,7 @@ import sys
 sys.path.insert(0, '../..')
 
 from cnucnu import unalias, ALIASES
+from cnucnu.package_list import Package, Repository
 
 
 class AliasTest(unittest.TestCase):
@@ -74,6 +75,14 @@ class AliasTest(unittest.TestCase):
             url,
             "http://pear.php.net/package/Test_Case/download/All"
         )
+
+    def testGITHUBTags(self):
+        p = Package("cnucnu_test", "GITHUB-TAGS", "test_url", Repository())
+        p._html = """ "name": "0.1.2" """
+        self.assertEqual(p.upstream_versions, ["0.1.2"])
+
+        p._html = """ "name": "v0.1.2" """
+        self.assertEqual(p.upstream_versions, ["0.1.2"])
 
 
 if __name__ == "__main__":
