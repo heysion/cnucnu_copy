@@ -10,4 +10,7 @@ view: html
 check-doc:
 	epydoc --check cnucnu/
 
+check:
+	py.test
+
 FORCE:
