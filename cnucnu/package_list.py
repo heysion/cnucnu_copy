@@ -104,16 +104,20 @@ class Repository:
 
 
 class Package(object):
-
     def __init__(self, name, regex, url, repo=Repository(), scm=SCM(),
                  br=BugzillaReporter(), package_list=None):
         # :TODO: add some sanity checks
         self.name = name
 
-        self.raw_regex = None
-        self.raw_url = None
+        self.raw_regex = regex
         self.regex = regex
+        self.raw_url = url
         self.url = url
+        self.repo = repo
+        self.repo_name = repo.name
+        self.scm = scm
+        self.br = br
+        self.package_list = package_list
 
         self._html = None
         self._latest_upstream = None
@@ -121,12 +125,6 @@ class Package(object):
         self._repo_version = None
         self._repo_release = None
         self._rpm_diff = None
-
-        self.repo = repo
-        self.repo_name = repo.name
-        self.scm = scm
-        self.br = br
-        self.package_list = package_list
 
     def _invalidate_caches(self):
         self._latest_upstream = None
