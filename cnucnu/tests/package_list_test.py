@@ -22,13 +22,13 @@ import unittest
 import sys
 sys.path.insert(0, '../..')
 
-from cnucnu.package_list import Package
-from cnucnu.package_list import Repository
+from cnucnu.package_list import Package, Repository
+
 
 class PackageTest(unittest.TestCase):
 
     def testCreatePackage(self):
-        p = Package("name", "regex", "url", Repository())
+        Package("name", "regex", "url", Repository())
 
     def testRegexUpdate(self):
         p = Package("name", "regex", "url", Repository())
@@ -61,12 +61,17 @@ class PackageTest(unittest.TestCase):
         self.assertEqual(p.upstream_versions, ["1.23"])
 
         # multiple groups
-        p = Package("cnucnu_test", "cnucnu_test-([1-9]+\.[1-9]+\.[1-9]+)-p([0-9]+)\.tar\.gz", "test_url", Repository())
+        p = Package("cnucnu_test",
+                    "cnucnu_test-([1-9]+\.[1-9]+\.[1-9]+)-p([0-9]+)\.tar\.gz",
+                    "test_url", Repository())
         p._html = "cnucnu_test-1.2.3-p4.tar.gz"
         self.assertEqual(p.upstream_versions, ["1.2.3.4"])
 
         # empty group
-        p = Package("cnucnu_test", "cnucnu_test-([1-9]+\.[1-9]+\.[1-9]+)(-p([0-9]+))?\.tar\.gz", "test_url", Repository())
+        p = Package(
+            "cnucnu_test",
+            "cnucnu_test-([1-9]+\.[1-9]+\.[1-9]+)(-p([0-9]+))?\.tar\.gz",
+            "test_url", Repository())
         p._html = "cnucnu_test-1.2.3.tar.gz"
         self.assertEqual(p.upstream_versions, ["1.2.3"])
 
