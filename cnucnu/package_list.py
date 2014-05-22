@@ -32,7 +32,7 @@ import subprocess
 
 #extra modules
 import pycurl
-from fedora.client.pkgdb import PackageDB
+import pkgdb2client
 
 # cnucnu modules
 import cnucnu
@@ -349,12 +349,17 @@ class PackageList:
     @property
     def ignore_packages(self):
         if self._ignore_packages is None:
-            pdb = PackageDB(retries=5)
+            pkgdb = pkgdb2client.PkgDB()
             ignore_packages = []
             for owner in self.ignore_owners:
-                pkgs = pdb.user_packages(owner, acls="owner")["pkgs"]
-                p_names = [p["name"] for p in pkgs]
-                ignore_packages.extend(p_names)
+                try:
+                    # raises PkgDBException if owner is no point of contact for
+                    # any package
+                    pkgs = pkgdb.get_packages(poc=owner)["packages"]
+                    p_names = [p["name"] for p in pkgs]
+                    ignore_packages.extend(p_names)
+                except pkgdb2client.PkgDBException:
+                    pass
             ignore_packages = set(ignore_packages)
             self._ignore_packages = ignore_packages
         return self._ignore_packages
