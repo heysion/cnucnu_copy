@@ -319,9 +319,11 @@ class PackageList:
             ignore_owner_regex = re.compile('\\* ([^ ]*)')
             self.ignore_owners = [
                 o[0].encode("UTF-8") for o in
-                helper.match_interval(page_text, ignore_owner_regex,
-                                      "== Package Owner Ignore List ==",
-                                      "<!-- END PACKAGE OWNER IGNORE LIST -->")
+                helper.match_interval(
+                    page_text, ignore_owner_regex,
+                    "== Package Point of Contact Ignore List ==",
+                    "<!-- END PACKAGE POC IGNORE LIST -->"
+                )
             ]
 
             packages = []
