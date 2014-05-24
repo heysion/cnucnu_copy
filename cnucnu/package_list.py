@@ -334,10 +334,15 @@ class PackageList:
                 page_text, package_line_regex,
                     "== List Of Packages ==", "<!-- END LIST OF PACKAGES -->"):
                 (name, regex, url) = package_data
-                matched_names = fnmatch.filter(repo.nvr_dict.keys(), name)
-                if len(matched_names) == 0:
-                    # Add non-matching name to trigger an error/warning later
-                    # FIXME: Properly report bad names
+                # fnmatch.filter() is very slow, therefore check first if any
+                # wildcard chars exist
+                if "*" in name or "?" in name or "[" in name:
+                    matched_names = fnmatch.filter(repo.nvr_dict.keys(), name)
+                    if len(matched_names) == 0:
+                        # Add non-matching name to trigger an error/warning
+                        # later FIXME: Properly report bad names
+                        matched_names = [name]
+                else:
                     matched_names = [name]
                 for name in matched_names:
                     packages.append(
